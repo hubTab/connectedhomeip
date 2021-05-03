@@ -26,7 +26,7 @@
 
 namespace chip {
 
-// TODO: Admin Pairing table should be backed by a single backing store (attribute store), remove delegate callbacks.
+// TODO: Admin Pairing table should be backed by a single backing store (attribute store), remove delegate callbacks #6419
 namespace {
     PersistentStorageDelegate * gStorage = nullptr;
     Transport::AdminPairingTableDelegate * gDelegate = nullptr;
@@ -162,14 +162,14 @@ AdminPairingInfo * AdminPairingTable::AssignAdminId(AdminId adminId, NodeId node
 
 void AdminPairingTable::ReleaseAdminId(AdminId adminId)
 {
-    AdminPairingInfo * admin = FindAdmin(adminId);
+    AdminPairingInfo * admin = FindAdminWithId(adminId);
     if (admin != nullptr)
     {
         admin->Reset();
     }
 }
 
-AdminPairingInfo * AdminPairingTable::FindAdmin(AdminId adminId)
+AdminPairingInfo * AdminPairingTable::FindAdminWithId(AdminId adminId)
 {
     for (auto & state : mStates)
     {
@@ -182,47 +182,7 @@ AdminPairingInfo * AdminPairingTable::FindAdmin(AdminId adminId)
     return nullptr;
 }
 
-AdminPairingInfo * AdminPairingTable::FindAdmin(FabricId fabricId)
-{
-    uint32_t index = 0;
-    for (auto & state : mStates)
-    {
-        if (state.IsInitialized())
-        {
-            ChipLogProgress(Discovery, "Looking at index %d with fabricID %llu nodeID %llu to see if it matches fabricId %llu.", index, state.GetFabricId(), state.GetNodeId(), fabricId);
-        }
-        if (state.IsInitialized() && state.GetFabricId() == fabricId)
-        {
-            ChipLogProgress(Discovery, "Found a match!");
-            return &state;
-        }
-        index ++;
-    }
-
-    return nullptr;
-}
-
-AdminPairingInfo * AdminPairingTable::FindAdmin(FabricId fabricId, NodeId nodeId)
-{
-    uint32_t index = 0;
-    for (auto & state : mStates)
-    {
-        if (state.IsInitialized())
-        {
-            ChipLogProgress(Discovery, "Looking at index %d with fabricID %llu nodeID %llu to see if it matches fabricId %llu nodeId %llu.", index, state.GetFabricId(), state.GetNodeId(), fabricId, nodeId);
-        }
-        if (state.IsInitialized() && state.GetFabricId() == fabricId && state.GetNodeId() == nodeId)
-        {
-            ChipLogProgress(Discovery, "Found a match!");
-            return &state;
-        }
-        index ++;
-    }
-
-    return nullptr;
-}
-
-AdminPairingInfo * AdminPairingTable::FindAdmin(FabricId fabricId, NodeId nodeId, uint16_t vendorId)
+AdminPairingInfo * AdminPairingTable::FindAdminForNode(FabricId fabricId, NodeId nodeId, uint16_t vendorId)
 {
     uint32_t index = 0;
     for (auto & state : mStates)
@@ -232,7 +192,10 @@ AdminPairingInfo * AdminPairingTable::FindAdmin(FabricId fabricId, NodeId nodeId
             ChipLogProgress(Discovery, "Looking at index %d with fabricID %llu nodeID %llu vendorId %d to see if it matches fabricId %llu nodeId %llu vendorId %d.", 
                             index, state.GetFabricId(), state.GetNodeId(), state.GetVendorId(), fabricId, nodeId, vendorId);
         }
-        if (state.IsInitialized() && state.GetFabricId() == fabricId && state.GetNodeId() == nodeId && state.GetVendorId() == vendorId)
+        if (state.IsInitialized() && 
+            state.GetFabricId() == fabricId && 
+            (nodeId == kUndefinedNodeId || state.GetNodeId() == nodeId) &&
+            (vendorId == kUndefinedVendorId || state.GetVendorId() == vendorId))
         {
             ChipLogProgress(Discovery, "Found a match!");
             return &state;

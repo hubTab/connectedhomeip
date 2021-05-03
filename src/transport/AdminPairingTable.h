@@ -226,13 +226,9 @@ public:
 
     void ReleaseAdminId(AdminId adminId);
 
-    AdminPairingInfo * FindAdmin(AdminId adminId);
+    AdminPairingInfo * FindAdminWithId(AdminId adminId);
 
-    AdminPairingInfo * FindAdmin(FabricId fabricId);
-
-    AdminPairingInfo * FindAdmin(FabricId fabricId, NodeId nodeId);
-
-    AdminPairingInfo * FindAdmin(FabricId fabricId, NodeId nodeId, uint16_t vendorId);
+    AdminPairingInfo * FindAdminForNode(FabricId fabricId, NodeId nodeId = kUndefinedNodeId, uint16_t vendorId = kUndefinedVendorId);
 
     void Reset();
 

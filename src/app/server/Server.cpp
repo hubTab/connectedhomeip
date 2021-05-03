@@ -282,7 +282,7 @@ public:
                 mDelegate->OnPairingWindowClosed();
         }
 
-        AdminPairingInfo * admin = gAdminPairings.FindAdmin(mAdmin);
+        AdminPairingInfo * admin = gAdminPairings.FindAdminWithId(mAdmin);
         if (admin != nullptr)
         {
             ReturnErrorOnFailure(PersistAdminPairingToKVS(admin, gNextAvailableAdminId));

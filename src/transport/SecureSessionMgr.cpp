@@ -170,7 +170,7 @@ CHIP_ERROR SecureSessionMgr::SendMessage(SecureSessionHandle session, PayloadHea
 
     // This marks any connection where we send data to as 'active'
     mPeerConnections.MarkConnectionActive(state);
-    admin = mAdmins->FindAdmin(state->GetAdminId());
+    admin = mAdmins->FindAdminWithId(state->GetAdminId());
     VerifyOrExit(admin != nullptr, err = CHIP_ERROR_INCORRECT_STATE);
     localNodeId = admin->GetNodeId();
 
@@ -388,7 +388,7 @@ void SecureSessionMgr::SecureMessageDispatch(const PacketHeader & packetHeader, 
         ExitNow(err = CHIP_ERROR_KEY_NOT_FOUND_FROM_PEER);
     }
 
-    admin = mAdmins->FindAdmin(state->GetAdminId());
+    admin = mAdmins->FindAdminWithId(state->GetAdminId());
     VerifyOrExit(admin != nullptr,
                  ChipLogError(Inet, "Secure transport received packet for unknown admin (%p, %d) pairing, discarding", state,
                               state->GetAdminId()));

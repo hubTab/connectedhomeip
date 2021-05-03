@@ -66,8 +66,13 @@ EmberAfStatus writeFabricAttribute(uint8_t * buffer, int32_t index = -1)
     // Since the first 2 bytes of the attribute are used to store the number of elements, elements indexing starts
     // at 1. In order to hide this to the rest of the code of this file, the element index is incremented by 1 here.
     // This also allows calling writeAttribute() with no index arg to mean "write the length".
-    
-    return emAfReadOrWriteAttribute(&record, NULL, buffer, 0, true, index + 1);
+
+    return emAfReadOrWriteAttribute(&record, 
+                                    NULL, // metadata
+                                    buffer, 
+                                    0, // read length
+                                    true, // write ?
+                                    index + 1);
 }
 
 EmberAfStatus writeFabric(FabricId fabricId, NodeId nodeId, uint16_t vendorId, int32_t index)
@@ -85,7 +90,7 @@ EmberAfStatus writeFabric(FabricId fabricId, NodeId nodeId, uint16_t vendorId, i
     return status;
 }
 
-CHIP_ERROR writeAdminsIntoFabricsListAttribute(void)
+CHIP_ERROR writeAdminsIntoFabricsListAttribute()
 {
     emberAfPrintln(EMBER_AF_PRINT_DEBUG, "OpCreds: Call to writeAdminsIntoFabricsListAttribute");
     CHIP_ERROR err = CHIP_NO_ERROR;
@@ -135,9 +140,9 @@ CHIP_ERROR writeAdminsIntoFabricsListAttribute(void)
 AdminPairingInfo * retrieveCurrentAdmin()
 {
     uint64_t fabricId = emberAfCurrentCommand()->source;
-    // TODO: Figure out how to get device node id so we can do FindAdmin(fabricId, nodeId)...
+    // TODO: Figure out how to get device node id so we can do FindAdminForNode(fabricId, nodeId)...
     emberAfPrintln(EMBER_AF_PRINT_DEBUG, "OpCreds: Finding admin with fabricId  %" PRIX64 ".", fabricId);
-    return GetGlobalAdminPairingTable().FindAdmin(fabricId);
+    return GetGlobalAdminPairingTable().FindAdminForNode(fabricId);
 }
 
 
@@ -194,7 +199,7 @@ bool emberAfOperationalCredentialsClusterRemoveFabricCallback(chip::app::Command
     CHIP_ERROR err;
 
     // Fetch matching admin
-    admin = GetGlobalAdminPairingTable().FindAdmin(fabricId, nodeId, vendorId);
+    admin = GetGlobalAdminPairingTable().FindAdminForNode(fabricId, nodeId, vendorId);
     VerifyOrExit(admin != nullptr, status = EMBER_ZCL_STATUS_SUCCESS); // Admin has already been removed
 
     // Delete admin
