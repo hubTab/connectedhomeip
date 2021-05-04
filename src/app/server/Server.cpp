@@ -97,15 +97,13 @@ class ServerStorageDelegate : public PersistentStorageDelegate
     CHIP_ERROR SyncSetKeyValue(const char * key, const void * value, uint16_t size) override
     {
         ChipLogProgress(AppServer, "Stored value in server storage");
-        CHIP_ERROR err = PersistedStorage::KeyValueStoreMgr().Put(key, value, size);
-        return err;
+        return PersistedStorage::KeyValueStoreMgr().Put(key, value, size);
     }
 
     CHIP_ERROR SyncDeleteKeyValue(const char * key) override
     {
         ChipLogProgress(AppServer, "Delete value in server storage");
-        CHIP_ERROR err = PersistedStorage::KeyValueStoreMgr().Delete(key);
-        return err;
+        return PersistedStorage::KeyValueStoreMgr().Delete(key);
     }
 
     void AsyncDeleteKeyValue(const char * key) override 
