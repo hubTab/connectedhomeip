@@ -23,6 +23,12 @@ step. To install these components manually, follow these steps:
 
           $ sudo apt-get install ninja-build
 
+-   Install prerequisite packages
+
+          $ sudo apt-get install -y libssl-dev
+          $ sudo snap install avahi-client
+          $ sudo apt-get install libavahi-client-dev libavahi-core-dev libavahi-glib-dev
+
 ### To build the application, follow these steps:
 
 Currently building in VSCode _and_ deploying from native is not supported, so
