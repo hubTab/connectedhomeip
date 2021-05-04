@@ -2119,22 +2119,22 @@ private:
     dispatch_queue_t mQueue;
 };
 
-class CHIPOperationalCredentialsClusterGetFabricIdResponseCallbackBridge
-    : public Callback::Callback<OperationalCredentialsClusterGetFabricIdResponseCallback> {
+class CHIPOperationalCredentialsClusterSetFabricResponseCallbackBridge
+    : public Callback::Callback<OperationalCredentialsClusterSetFabricResponseCallback> {
 public:
-    CHIPOperationalCredentialsClusterGetFabricIdResponseCallbackBridge(ResponseHandler handler, dispatch_queue_t queue)
-        : Callback::Callback<OperationalCredentialsClusterGetFabricIdResponseCallback>(CallbackFn, this)
+    CHIPOperationalCredentialsClusterSetFabricResponseCallbackBridge(ResponseHandler handler, dispatch_queue_t queue)
+        : Callback::Callback<OperationalCredentialsClusterSetFabricResponseCallback>(CallbackFn, this)
         , mHandler(handler)
         , mQueue(queue)
     {
     }
 
-    ~CHIPOperationalCredentialsClusterGetFabricIdResponseCallbackBridge() {};
+    ~CHIPOperationalCredentialsClusterSetFabricResponseCallbackBridge() {};
 
     static void CallbackFn(void * context, chip::FabricId FabricId)
     {
-        CHIPOperationalCredentialsClusterGetFabricIdResponseCallbackBridge * callback
-            = reinterpret_cast<CHIPOperationalCredentialsClusterGetFabricIdResponseCallbackBridge *>(context);
+        CHIPOperationalCredentialsClusterSetFabricResponseCallbackBridge * callback
+            = reinterpret_cast<CHIPOperationalCredentialsClusterSetFabricResponseCallbackBridge *>(context);
         if (callback && callback->mQueue) {
             dispatch_async(callback->mQueue, ^{
                 callback->mHandler(nil, @ {
@@ -2733,11 +2733,9 @@ public:
         if (callback && callback->mQueue) {
             id values[count];
             for (uint16_t i = 0; i < count; i++) {
-                values[i] =
-                    [[NSDictionary alloc] initWithObjectsAndKeys:[NSNumber numberWithUnsignedLongLong:entries[i].FabricId],
-                                          @"FabricId", [NSNumber numberWithUnsignedShort:entries[i].VendorId], @"VendorId",
-                                          [NSData dataWithBytes:entries[i].Label.data() length:entries[i].Label.size()], @"Label",
-                                          [NSNumber numberWithUnsignedLongLong:entries[i].NodeId], @"NodeId", nil];
+                values[i] = [[NSDictionary alloc] initWithObjectsAndKeys:[NSNumber numberWithUnsignedLongLong:entries[i].FabricId],
+                                                  @"FabricId", [NSNumber numberWithUnsignedShort:entries[i].VendorId], @"VendorId",
+                                                  [NSNumber numberWithUnsignedLongLong:entries[i].NodeId], @"NodeId", nil];
             }
 
             id array = [NSArray arrayWithObjects:values count:count];
@@ -10060,33 +10058,6 @@ private:
     return &_cppCluster;
 }
 
-- (void)getFabricId:(ResponseHandler)completionHandler
-{
-    CHIPOperationalCredentialsClusterGetFabricIdResponseCallbackBridge * onSuccess
-        = new CHIPOperationalCredentialsClusterGetFabricIdResponseCallbackBridge(completionHandler, [self callbackQueue]);
-    if (!onSuccess) {
-        completionHandler([CHIPError errorForCHIPErrorCode:CHIP_ERROR_INCORRECT_STATE], nil);
-        return;
-    }
-
-    CHIPDefaultFailureCallbackBridge * onFailure = new CHIPDefaultFailureCallbackBridge(completionHandler, [self callbackQueue]);
-    if (!onFailure) {
-        delete onSuccess;
-        completionHandler([CHIPError errorForCHIPErrorCode:CHIP_ERROR_INCORRECT_STATE], nil);
-        return;
-    }
-
-    __block CHIP_ERROR err;
-    dispatch_sync([self chipWorkQueue], ^{
-        err = self.cppCluster.GetFabricId(onSuccess->Cancel(), onFailure->Cancel());
-    });
-
-    if (err != CHIP_NO_ERROR) {
-        delete onSuccess;
-        delete onFailure;
-        completionHandler([CHIPError errorForCHIPErrorCode:err], nil);
-    }
-}
 - (void)removeFabric:(uint64_t)fabricId
                nodeId:(uint64_t)nodeId
              vendorId:(uint16_t)vendorId
@@ -10108,6 +10079,33 @@ private:
     __block CHIP_ERROR err;
     dispatch_sync([self chipWorkQueue], ^{
         err = self.cppCluster.RemoveFabric(onSuccess->Cancel(), onFailure->Cancel(), fabricId, nodeId, vendorId);
+    });
+
+    if (err != CHIP_NO_ERROR) {
+        delete onSuccess;
+        delete onFailure;
+        completionHandler([CHIPError errorForCHIPErrorCode:err], nil);
+    }
+}
+- (void)setFabric:(uint16_t)vendorId completionHandler:(ResponseHandler)completionHandler
+{
+    CHIPOperationalCredentialsClusterSetFabricResponseCallbackBridge * onSuccess
+        = new CHIPOperationalCredentialsClusterSetFabricResponseCallbackBridge(completionHandler, [self callbackQueue]);
+    if (!onSuccess) {
+        completionHandler([CHIPError errorForCHIPErrorCode:CHIP_ERROR_INCORRECT_STATE], nil);
+        return;
+    }
+
+    CHIPDefaultFailureCallbackBridge * onFailure = new CHIPDefaultFailureCallbackBridge(completionHandler, [self callbackQueue]);
+    if (!onFailure) {
+        delete onSuccess;
+        completionHandler([CHIPError errorForCHIPErrorCode:CHIP_ERROR_INCORRECT_STATE], nil);
+        return;
+    }
+
+    __block CHIP_ERROR err;
+    dispatch_sync([self chipWorkQueue], ^{
+        err = self.cppCluster.SetFabric(onSuccess->Cancel(), onFailure->Cancel(), vendorId);
     });
 
     if (err != CHIP_NO_ERROR) {

@@ -327,23 +327,6 @@ CHIPDevice * GetPairedDevice(uint64_t deviceId)
 
     [self waitForExpectationsWithTimeout:kTimeoutInSeconds handler:nil];
 }
-- (void)testSendClusterOperationalCredentialsGetFabricIdCommand
-{
-    XCTestExpectation * expectation = [self expectationWithDescription:@"OperationalCredentialsGetFabricId"];
-
-    CHIPDevice * device = GetPairedDevice(kDeviceId);
-    dispatch_queue_t queue = dispatch_get_main_queue();
-    CHIPOperationalCredentials * cluster = [[CHIPOperationalCredentials alloc] initWithDevice:device endpoint:0 queue:queue];
-    XCTAssertNotNil(cluster);
-
-    [cluster getFabricId:^(NSError * err, NSDictionary * values) {
-        NSLog(@"OperationalCredentials GetFabricId Error: %@", err);
-        XCTAssertEqual(err.code, 1);
-        [expectation fulfill];
-    }];
-
-    [self waitForExpectationsWithTimeout:kTimeoutInSeconds handler:nil];
-}
 - (void)testSendClusterThermostatClearWeeklyScheduleCommand
 {
     XCTestExpectation * expectation = [self expectationWithDescription:@"ThermostatClearWeeklySchedule"];
