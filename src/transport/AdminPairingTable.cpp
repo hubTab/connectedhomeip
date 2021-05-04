@@ -26,22 +26,11 @@
 
 namespace chip {
 
-// TODO: Admin Pairing table should be backed by a single backing store (attribute store), remove delegate callbacks #6419
-namespace {
-    PersistentStorageDelegate * gStorage = nullptr;
-    Transport::AdminPairingTableDelegate * gDelegate = nullptr;
-} // anonymous namespace
-
 namespace Transport {
 
-CHIP_ERROR AdminPairingInfo::StoreIntoKVS()
+CHIP_ERROR AdminPairingInfo::StoreIntoKVS(PersistentStorageDelegate * kvs)
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
-    if (gStorage == nullptr)
-    {
-        ChipLogError(Discovery, "Server storage delegate is null, cannot store admin in KVS");
-        return CHIP_ERROR_INVALID_ARGUMENT;
-    }
 
     char key[KeySize()];
     ReturnErrorOnFailure(GenerateKey(mAdmin, key, sizeof(key)));
@@ -52,69 +41,45 @@ CHIP_ERROR AdminPairingInfo::StoreIntoKVS()
     info.mFabricId = Encoding::LittleEndian::HostSwap64(mFabricId);
     info.mVendorId = Encoding::LittleEndian::HostSwap16(mVendorId);
 
-    err = gStorage->SyncSetKeyValue(key, &info, sizeof(info));
+    err = kvs->SyncSetKeyValue(key, &info, sizeof(info));
     if (err != CHIP_NO_ERROR)
     {
         ChipLogError(Discovery, "Error occurred calling SyncSetKeyValue.");
-    } else if (gDelegate != nullptr)
-    {
-        ChipLogProgress(Discovery, "New admin (%d)  to KVS store, calling OnAdminPersistedToStorage.", info.mAdmin);
-        gDelegate->OnAdminPersistedToStorage(mAdmin, mFabricId, mNodeId);
     }
    
     return err;
 }
 
-CHIP_ERROR AdminPairingInfo::FetchFromKVS()
+CHIP_ERROR AdminPairingInfo::FetchFromKVS(PersistentStorageDelegate * kvs)
 {
-    if (gStorage == nullptr)
-    {
-        ChipLogError(Discovery, "Server storage delegate is null, cannot fetch from KVS");
-        return CHIP_ERROR_INVALID_ARGUMENT;
-    }
     char key[KeySize()];
     ReturnErrorOnFailure(GenerateKey(mAdmin, key, sizeof(key)));
 
     StorableAdminPairingInfo info;
 
     uint16_t size = sizeof(info);
-    ReturnErrorOnFailure(gStorage->SyncGetKeyValue(key, &info, size));
+    ReturnErrorOnFailure(kvs->SyncGetKeyValue(key, &info, size));
 
     mNodeId    = Encoding::LittleEndian::HostSwap64(info.mNodeId);
     AdminId id = Encoding::LittleEndian::HostSwap16(info.mAdmin);
     mFabricId  = Encoding::LittleEndian::HostSwap64(info.mFabricId);
     mVendorId  = Encoding::LittleEndian::HostSwap16(info.mVendorId);
     ReturnErrorCodeIf(mAdmin != id, CHIP_ERROR_INCORRECT_STATE);
-
-    if (gDelegate != nullptr)
-    {
-        ChipLogProgress(Discovery, "New admin (%d) fetched from KVS store. Calling OnAdminRetrievedFromStorage.", info.mAdmin);
-        gDelegate->OnAdminRetrievedFromStorage(id, mFabricId, mNodeId);
-    }
     
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR AdminPairingInfo::DeleteFromKVS(AdminId id)
+CHIP_ERROR AdminPairingInfo::DeleteFromKVS(PersistentStorageDelegate * kvs, AdminId id)
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
-    if (gStorage == nullptr)
-    {
-        ChipLogError(Discovery, "Server storage delegate is null, cannot delete from KVS");
-        return CHIP_ERROR_INVALID_ARGUMENT;
-    }
 
     char key[KeySize()];
     ReturnErrorOnFailure(GenerateKey(id, key, sizeof(key)));
 
-    err = gStorage->SyncDeleteKeyValue(key);
+    err = kvs->SyncDeleteKeyValue(key);
     if (err != CHIP_NO_ERROR)
     {
         ChipLogError(Discovery, "Error occurred calling SyncDeleteKeyValue");
-    } else if (gDelegate != nullptr)
-    {
-        ChipLogProgress(Discovery, "Admin (%d) removed from  from KVS store, calling OnAdminDeletedFromStorage", id);
-        gDelegate->OnAdminDeletedFromStorage(id);
     }
     return err;
 }
@@ -214,10 +179,81 @@ void AdminPairingTable::Reset()
     }
 }
 
+CHIP_ERROR AdminPairingTable::Store(AdminId id)
+{
+    CHIP_ERROR err = CHIP_NO_ERROR;
+    AdminPairingInfo * admin;
+
+    VerifyOrExit(mStorage != nullptr, err = CHIP_ERROR_INVALID_ARGUMENT);
+
+    admin = FindAdminWithId(id);
+    VerifyOrExit(admin != nullptr, err = CHIP_ERROR_INVALID_ARGUMENT);
+
+    err = admin->StoreIntoKVS(mStorage);
+exit:
+    if (err == CHIP_NO_ERROR && mDelegate != nullptr) 
+    {
+        ChipLogProgress(Discovery, "Admin (%d) persisted to storage. Calling OnAdminPersistedToStorage.", id);
+        mDelegate->OnAdminPersistedToStorage(admin);
+    }
+    return err;
+}
+ 
+CHIP_ERROR AdminPairingTable::LoadFromStorage(AdminId id)
+{
+    CHIP_ERROR err = CHIP_NO_ERROR;
+    AdminPairingInfo * admin;
+    bool didCreateAdmin = false;
+    VerifyOrExit(mStorage != nullptr, err = CHIP_ERROR_INVALID_ARGUMENT);
+    
+    admin = FindAdminWithId(id);
+    if (admin == nullptr)
+    {
+       admin = AssignAdminId(id);
+       didCreateAdmin = true;
+    }
+    VerifyOrExit(admin != nullptr, err = CHIP_ERROR_INVALID_ARGUMENT);
+    err = admin->FetchFromKVS(mStorage);
+    
+exit:
+    if (err != CHIP_NO_ERROR && didCreateAdmin)
+    {
+        ReleaseAdminId(id);
+    } else if (err == CHIP_NO_ERROR && mDelegate != nullptr) {
+        ChipLogProgress(Discovery, "Admin (%d) loaded from storage. Calling OnAdminRetrievedFromStorage.", id);
+        mDelegate->OnAdminRetrievedFromStorage(admin);
+    }
+    return err;
+}
+
+CHIP_ERROR AdminPairingTable::Delete(AdminId id)
+{
+    AdminPairingInfo * admin;
+    CHIP_ERROR err = CHIP_NO_ERROR;
+    bool adminIsInitialized = false;
+    VerifyOrExit(mStorage != nullptr, err = CHIP_ERROR_INVALID_ARGUMENT);
+
+    admin = FindAdminWithId(id);
+    adminIsInitialized = admin != nullptr && admin->IsInitialized();
+    err = AdminPairingInfo::DeleteFromKVS(mStorage, id); //Delete from storage regardless
+
+exit:
+    if (err == CHIP_NO_ERROR)
+    {
+        ReleaseAdminId(id);
+        if (mDelegate != nullptr && adminIsInitialized) 
+        {
+            ChipLogProgress(Discovery, "Admin (%d) deleted. Calling OnAdminDeletedFromStorage.", id);
+            mDelegate->OnAdminDeletedFromStorage(id);
+        }
+    }
+    return CHIP_NO_ERROR;
+}
+
 CHIP_ERROR AdminPairingTable::Init(PersistentStorageDelegate * storage)
 {
     VerifyOrReturnError(storage != nullptr, CHIP_ERROR_INVALID_ARGUMENT);
-    gStorage  = storage;
+    mStorage  = storage;
     ChipLogProgress(Discovery, "Init admin pairing table with server storage.");
     return CHIP_NO_ERROR;
 }
@@ -225,7 +261,7 @@ CHIP_ERROR AdminPairingTable::Init(PersistentStorageDelegate * storage)
 CHIP_ERROR AdminPairingTable::SetAdminPairingDelegate(AdminPairingTableDelegate * delegate)
 {
     VerifyOrReturnError(delegate != nullptr, CHIP_ERROR_INVALID_ARGUMENT);
-    gDelegate  = delegate;
+    mDelegate  = delegate;
     ChipLogProgress(Discovery, "Set the admin pairing table delegate");
     return CHIP_NO_ERROR;
 }

@@ -122,7 +122,7 @@ CHIP_ERROR PersistAdminPairingToKVS(AdminPairingInfo * admin, AdminId nextAvaila
     ReturnErrorCodeIf(admin == nullptr, CHIP_ERROR_INVALID_ARGUMENT);
     ChipLogProgress(AppServer, "Persisting admin ID %d, next available %d", admin->GetAdminId(), nextAvailableId);
 
-    ReturnErrorOnFailure(admin->StoreIntoKVS());
+    ReturnErrorOnFailure(GetGlobalAdminPairingTable().Store(admin->GetAdminId()));
     ReturnErrorOnFailure(PersistedStorage::KeyValueStoreMgr().Put(kAdminTableCountKey, &nextAvailableId, sizeof(nextAvailableId)));
 
     ChipLogProgress(AppServer, "Persisting admin ID successfully");
@@ -141,16 +141,15 @@ CHIP_ERROR RestoreAllAdminPairingsFromKVS(AdminPairingTable & adminPairings, Adm
     //       Also, the current approach can make ID lookup slower as more IDs are allocated and freed.
     for (AdminId id = 0; id < nextAvailableId; id++)
     {
-        AdminPairingInfo * admin = adminPairings.AssignAdminId(id);
         // Recreate the binding if one exists in persistent storage. Else skip to the next ID
-        if (admin->FetchFromKVS() != CHIP_NO_ERROR)
+        if (adminPairings.LoadFromStorage(id) == CHIP_NO_ERROR)
         {
-            adminPairings.ReleaseAdminId(id);
-        }
-        else
-        {
-            ChipLogProgress(AppServer, "Found admin pairing for %d, node ID 0x%08" PRIx32 "%08" PRIx32, admin->GetAdminId(),
+            AdminPairingInfo *admin = adminPairings.FindAdminWithId(id);
+            if (admin != nullptr)
+            {
+                ChipLogProgress(AppServer, "Found admin pairing for %d, node ID 0x%08" PRIx32 "%08" PRIx32, admin->GetAdminId(),
                             static_cast<uint32_t>(admin->GetNodeId() >> 32), static_cast<uint32_t>(admin->GetNodeId()));
+            }
         }
     }
     ChipLogProgress(AppServer, "Restored all admin pairings from KVS.");
@@ -164,7 +163,7 @@ void EraseAllAdminPairingsUpTo(AdminId nextAvailableId)
 
     for (AdminId id = 0; id < nextAvailableId; id++)
     {
-        AdminPairingInfo::DeleteFromKVS(id);
+        GetGlobalAdminPairingTable().Delete(id);
     }
 }
 

@@ -47,29 +47,6 @@ struct AccessControlList
     uint32_t placeholder;
 };
 
-// Once attribute store has persistence implemented, AdminPairingTable shoud be backed using 
-// attribute store so no need for this Delegate API anymore
-// TODO: Reimplement AdminPairingTable to only have one backing store.
-class DLL_EXPORT AdminPairingTableDelegate
-{
-public:
-    virtual ~AdminPairingTableDelegate() {}
-    /**
-    * Gets called when an admin is deleted from KVS store.
-    **/
-    virtual void OnAdminDeletedFromStorage(AdminId adminId) = 0;
-
-    /**
-    * Gets called when an admin is loaded into Admin Pairing Table from KVS store.
-    **/
-    virtual void OnAdminRetrievedFromStorage(AdminId adminId, FabricId fabricId, NodeId nodeId) = 0;
-
-    /**
-    * Gets called when an admin in Admin Pairing Table is persisted to KVS store.
-    **/
-    virtual void OnAdminPersistedToStorage(AdminId adminId, FabricId fabricId, NodeId nodeId) = 0;
-};
-
 /**
  * Defines state of a pairing established by an admin.
  * ACL data can be mutated throughout the lifetime of the admin pairing.
@@ -121,11 +98,7 @@ public:
         mVendorId = kUndefinedVendorId;
     }
 
-    CHIP_ERROR StoreIntoKVS();
-
-    CHIP_ERROR FetchFromKVS();
-
-    static CHIP_ERROR DeleteFromKVS(AdminId id);
+    friend class AdminPairingTable;
 
 private:
     AdminId mAdmin     = kUndefinedAdminId;
@@ -139,6 +112,10 @@ private:
     static constexpr size_t KeySize();
 
     static CHIP_ERROR GenerateKey(AdminId id, char * key, size_t len);
+    
+    CHIP_ERROR StoreIntoKVS(PersistentStorageDelegate * kvs);
+    CHIP_ERROR FetchFromKVS(PersistentStorageDelegate * kvs);
+    static CHIP_ERROR DeleteFromKVS(PersistentStorageDelegate * kvs, AdminId id);
 
     struct StorableAdminPairingInfo
     {
@@ -147,6 +124,29 @@ private:
         uint64_t mFabricId; /* This field is serialized in LittleEndian byte order */
         uint16_t mVendorId; /* This field is serialized in LittleEndian byte order */
     };
+};
+
+// Once attribute store has persistence implemented, AdminPairingTable shoud be backed using 
+// attribute store so no need for this Delegate API anymore
+// TODO: Reimplement AdminPairingTable to only have one backing store.
+class DLL_EXPORT AdminPairingTableDelegate
+{
+public:
+    virtual ~AdminPairingTableDelegate() {}
+    /**
+    * Gets called when an admin is deleted from KVS store.
+    **/
+    virtual void OnAdminDeletedFromStorage(AdminId adminId) = 0;
+
+    /**
+    * Gets called when an admin is loaded into Admin Pairing Table from KVS store.
+    **/
+    virtual void OnAdminRetrievedFromStorage(AdminPairingInfo * adminInfo) = 0;
+
+    /**
+    * Gets called when an admin in Admin Pairing Table is persisted to KVS store.
+    **/
+    virtual void OnAdminPersistedToStorage(AdminPairingInfo * adminInfo) = 0;
 };
 
 /**
@@ -220,6 +220,11 @@ private:
 class DLL_EXPORT AdminPairingTable
 {
 public:
+
+    CHIP_ERROR Store(AdminId id);
+    CHIP_ERROR LoadFromStorage(AdminId id);
+    CHIP_ERROR Delete(AdminId id);
+
     AdminPairingInfo * AssignAdminId(AdminId adminId);
 
     AdminPairingInfo * AssignAdminId(AdminId adminId, NodeId nodeId);
@@ -245,6 +250,10 @@ public:
 
 private:
     AdminPairingInfo mStates[CHIP_CONFIG_MAX_DEVICE_ADMINS];
+    PersistentStorageDelegate * mStorage = nullptr;
+
+    // TODO: Admin Pairing table should be backed by a single backing store (attribute store), remove delegate callbacks #6419
+    AdminPairingTableDelegate * mDelegate = nullptr;
 };
 
 } // namespace Transport

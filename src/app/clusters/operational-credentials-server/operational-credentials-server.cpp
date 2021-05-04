@@ -157,23 +157,23 @@ class OpCredsAdminPairingTableDelegate : public AdminPairingTableDelegate
     // Gets called when a fabric is deleted from KVS store
     void OnAdminDeletedFromStorage(AdminId adminId) override
     {
-        emberAfPrintln(EMBER_AF_PRINT_DEBUG, "OpCreds: Admin %" PRIX16 " was deleted from admin storage.");
+        emberAfPrintln(EMBER_AF_PRINT_DEBUG, "OpCreds: Admin %" PRIX16 " was deleted from admin storage.", adminId);
         writeAdminsIntoFabricsListAttribute();
     }
 
     // Gets called when a fabric is loaded into the AdminPairingTable from KVS store.
-    void OnAdminRetrievedFromStorage(AdminId adminId, FabricId fabricId, NodeId nodeId) override
+    void OnAdminRetrievedFromStorage(AdminPairingInfo * admin) override
     {
         emberAfPrintln(EMBER_AF_PRINT_DEBUG, "OpCreds: Admin %" PRIX16 " was retrieved from storage. FabricId %" PRIX64
-                                            ", NodeId %" PRIX64 ", VendorId %" PRIX64, adminId, fabricId, nodeId);
+                                            ", NodeId %" PRIX64 ", VendorId %" PRIX64, admin->GetAdminId(), admin->GetFabricId(), admin->GetNodeId());
         writeAdminsIntoFabricsListAttribute();
     }
 
      // Gets called when a fabric in AdminPairingTable is persisted to KVS store.
-    void OnAdminPersistedToStorage(AdminId adminId, FabricId fabricId, NodeId nodeId) override
+    void OnAdminPersistedToStorage(AdminPairingInfo * admin) override
     {
         emberAfPrintln(EMBER_AF_PRINT_DEBUG, "OpCreds: Admin %" PRIX16 " was persisted to storage. FabricId %" PRIX64
-                                            ", NodeId %" PRIX64 ", VendorId %" PRIX64, adminId, fabricId, nodeId);
+                                            ", NodeId %" PRIX64 ", VendorId %" PRIX64, admin->GetAdminId(), admin->GetFabricId(), admin->GetNodeId());
         writeAdminsIntoFabricsListAttribute();
     }
 };
@@ -204,9 +204,8 @@ bool emberAfOperationalCredentialsClusterRemoveFabricCallback(chip::app::Command
 
     // Delete admin
     adminId = admin->GetAdminId();
-    err = AdminPairingInfo::DeleteFromKVS(adminId);
+    err = GetGlobalAdminPairingTable().Delete(admin->GetAdminId());
     VerifyOrExit(err == CHIP_NO_ERROR, status = EMBER_ZCL_STATUS_FAILURE);
-    GetGlobalAdminPairingTable().ReleaseAdminId(adminId);
 
 exit:
     writeAdminsIntoFabricsListAttribute();
@@ -230,7 +229,7 @@ bool emberAfOperationalCredentialsClusterSetFabricCallback(chip::app::Command * 
     // Store vendorId
     admin->SetVendorId(VendorId);
     emberAfPrintln(EMBER_AF_PRINT_DEBUG, "OpCreds: vendorId is now set %d", admin->GetVendorId());
-    err = admin->StoreIntoKVS();
+    err = GetGlobalAdminPairingTable().Store(admin->GetAdminId());
     VerifyOrExit(err == CHIP_NO_ERROR, status = EMBER_ZCL_STATUS_FAILURE);
 
     // Return FabricId - we are temporarily using commissioner nodeId (retrieved via emberAfCurrentCommand()->source) as fabricId

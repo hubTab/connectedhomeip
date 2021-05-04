@@ -468,7 +468,7 @@ void SecureSessionMgr::SecureMessageDispatch(const PacketHeader & packetHeader, 
     if (modifiedAdmin)
     {
         ChipLogProgress(Inet, "Since admin was modified, persisting changes to KVS");
-        admin->StoreIntoKVS();
+        mAdmins->Store(admin->GetAdminId());
     }
 
     // TODO: once mDNS address resolution is available reconsider if this is required
