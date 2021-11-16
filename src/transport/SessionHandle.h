@@ -53,6 +53,7 @@ public:
     bool HasFabricIndex() const { return (mFabric != kUndefinedFabricIndex); }
     FabricIndex GetFabricIndex() const { return mFabric; }
     void SetFabricIndex(FabricIndex fabricId) { mFabric = fabricId; }
+    void SetGroupId(GroupId groupId) { mGroupId.SetValue(groupId); }
 
     bool operator==(const SessionHandle & that) const
     {
@@ -81,6 +82,8 @@ public:
     // address is not known.  This can happen for secure sessions that have been
     // torn down, at the very least.
     const Transport::PeerAddress * GetPeerAddress(SessionManager * sessionManager) const;
+
+    CHIP_ERROR GetMRPIntervals(SessionManager * sessionManager, uint32_t & mrpIdleInterval, uint32_t & mrpActiveInterval);
 
     Transport::UnauthenticatedSessionHandle GetUnauthenticatedSession() const { return mUnauthenticatedSessionHandle.Value(); }
 

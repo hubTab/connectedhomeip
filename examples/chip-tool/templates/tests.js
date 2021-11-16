@@ -20,6 +20,7 @@ function getTests()
   const BinaryInput = [
     'Test_TC_BI_1_1',
     'Test_TC_BI_2_1',
+    'Test_TC_BI_2_2',
   ];
 
   const BooleanState = [
@@ -48,6 +49,7 @@ function getTests()
     'Test_TC_CC_7_3',
     'Test_TC_CC_7_4',
     'Test_TC_CC_8_1',
+    'Test_TC_CC_9_1',
     'Test_TC_CC_9_2',
     'Test_TC_CC_9_3',
   ];
@@ -55,6 +57,7 @@ function getTests()
   const DeviceManagement = [
     'Test_TC_DM_1_1',
     'Test_TC_DM_3_1',
+    'Test_TC_DM_2_2',
   ];
 
   const ElectricalMeasurement = [
@@ -65,6 +68,10 @@ function getTests()
     'Test_TC_FLW_1_1',
     'Test_TC_FLW_2_1',
     'Test_TC_FLW_2_2',
+  ];
+
+  const IlluminanceMeasurement = [
+    'Test_TC_ILL_1_1',
   ];
 
   const OccupancySensing = [
@@ -101,6 +108,7 @@ function getTests()
     'Test_TC_OO_1_1',
     'Test_TC_OO_2_1',
     'Test_TC_OO_2_2',
+    'Test_TC_OO_2_3',
   ];
 
   const PressureMeasurement = [
@@ -129,6 +137,7 @@ function getTests()
 
   const Thermostat = [
     'Test_TC_TSTAT_1_1',
+    'Test_TC_TSTAT_2_1',
   ];
 
   const ThermostatUserConfiguration = [
@@ -139,11 +148,13 @@ function getTests()
 
   const ThreadNetworkDiagnostics = [
     'Test_TC_DIAGTH_1_1',
+    'Test_TC_DIAGSW_3_2',
   ];
 
   const WindowCovering = [
     'Test_TC_WNCV_1_1',
     'Test_TC_WNCV_2_1',
+    'Test_TC_WNCV_2_2',
     'Test_TC_WNCV_2_5',
     'Test_TC_WNCV_3_1',
     'Test_TC_WNCV_3_2',
@@ -175,6 +186,7 @@ function getTests()
     'TestIdentifyCluster',
     'TestOperationalCredentialsCluster',
     'TestModeSelectCluster',
+    'TestGroupMessaging',
   ];
 
   const SoftwareDiagnostics = [
@@ -192,6 +204,7 @@ function getTests()
     DeviceManagement, //
     ElectricalMeasurement, //
     FlowMeasurement, //
+    IlluminanceMeasurement, //
     LevelControl, //
     MediaControl, //
     OccupancySensing, //

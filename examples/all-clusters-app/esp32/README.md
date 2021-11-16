@@ -5,16 +5,16 @@ control.
 
 ---
 
-- [CHIP ESP32 All Clusters Example](#chip-esp32-all-clusters-example)
-  - [Supported Devices](#supported-devices)
-  - [Building the Example Application](#building-the-example-application)
-  - [Commissioning and cluster control](#commissioning-and-cluster-control)
-    - [Setting up Python Controller](#setting-up-python-controller)
-    - [Commissioning over BLE](#commissioning-over-ble)
-    - [Cluster control](#cluster-control)
-    - [Flashing app using script](#flashing-app-using-script)
-    - [Note](#note)
-  - [Using the RPC console](#using-the-rpc-console)
+-   [CHIP ESP32 All Clusters Example](#chip-esp32-all-clusters-example)
+    -   [Supported Devices](#supported-devices)
+    -   [Building the Example Application](#building-the-example-application)
+    -   [Commissioning and cluster control](#commissioning-and-cluster-control)
+        -   [Setting up Python Controller](#setting-up-python-controller)
+        -   [Commissioning over BLE](#commissioning-over-ble)
+        -   [Cluster control](#cluster-control)
+        -   [Flashing app using script](#flashing-app-using-script)
+        -   [Note](#note)
+    -   [Using the RPC console](#using-the-rpc-console)
 
 ---
 
@@ -41,13 +41,13 @@ The VSCode devcontainer has these components pre-installed, so you can skip this
 step. To install these components manually, follow these steps:
 
 -   Clone the Espressif ESP-IDF and checkout
-    [v4.3 tag](https://github.com/espressif/esp-idf/releases/v4.3)
+    [v4.4 tag](https://github.com/espressif/esp-idf/releases/v4.4)
 
           $ mkdir ${HOME}/tools
           $ cd ${HOME}/tools
           $ git clone https://github.com/espressif/esp-idf.git
           $ cd esp-idf
-          $ git checkout v4.3
+          $ git checkout release/v4.4
           $ git submodule update --init
           $ ./install.sh
 
@@ -272,7 +272,7 @@ Alternatively, Enable RPCs in the build using menuconfig:
     - Enable the RPC library and Disable ENABLE_CHIP_SHELL
 
         Component config → CHIP Core → General Options → Enable Pigweed PRC library
-        Component config → CHIP Core → General Options → Disabe CHIP Shell
+        Component config → CHIP Core → General Options → Disable CHIP Shell
 
     - Ensure the UART is correctly configured for your board, for m5stack:
 
