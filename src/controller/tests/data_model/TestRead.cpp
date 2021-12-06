@@ -58,13 +58,15 @@ bool ServerClusterCommandExists(const ConcreteCommandPath & aCommandPath)
     return (aCommandPath.mEndpointId == kTestEndpointId && aCommandPath.mClusterId == TestCluster::Id);
 }
 
-CHIP_ERROR ReadSingleClusterData(FabricIndex aAccessingFabricIndex, const ConcreteAttributePath & aPath,
-                                 AttributeReportIB::Builder & aAttributeReport)
+CHIP_ERROR ReadSingleClusterData(FabricIndex aAccessingFabricIndex, const ConcreteReadAttributePath & aPath,
+                                 AttributeReportIBs::Builder & aAttributeReports,
+                                 AttributeValueEncoder::AttributeEncodeState * apEncoderState)
 {
 
     if (responseDirective == kSendDataResponse)
     {
-        AttributeDataIB::Builder attributeData = aAttributeReport.CreateAttributeData();
+        auto attributeReport                   = aAttributeReports.CreateAttributeReport();
+        AttributeDataIB::Builder attributeData = attributeReport.CreateAttributeData();
         TestCluster::Attributes::ListStructOctetString::TypeInfo::Type value;
         TestCluster::Structs::TestListStructOctet::Type valueBuf[4];
 
@@ -77,18 +79,20 @@ CHIP_ERROR ReadSingleClusterData(FabricIndex aAccessingFabricIndex, const Concre
             i++;
         }
 
+        attributeData.DataVersion(0);
         AttributePathIB::Builder attributePath = attributeData.CreatePath();
         attributePath.Endpoint(aPath.mEndpointId).Cluster(aPath.mClusterId).Attribute(aPath.mAttributeId).EndOfAttributePathIB();
         ReturnErrorOnFailure(attributePath.GetError());
 
         ReturnErrorOnFailure(DataModel::Encode(*(attributeData.GetWriter()),
                                                chip::TLV::ContextTag(chip::to_underlying(AttributeDataIB::Tag::kData)), value));
-        attributeData.DataVersion(0).EndOfAttributeDataIB();
-        return CHIP_NO_ERROR;
+        ReturnErrorOnFailure(attributeData.EndOfAttributeDataIB().GetError());
+        return attributeReport.EndOfAttributeReportIB().GetError();
     }
     else
     {
-        AttributeStatusIB::Builder attributeStatus = aAttributeReport.CreateAttributeStatus();
+        auto attributeReport                       = aAttributeReports.CreateAttributeReport();
+        AttributeStatusIB::Builder attributeStatus = attributeReport.CreateAttributeStatus();
         AttributePathIB::Builder attributePath     = attributeStatus.CreatePath();
         attributePath.Endpoint(aPath.mEndpointId).Cluster(aPath.mClusterId).Attribute(aPath.mAttributeId).EndOfAttributePathIB();
         ReturnErrorOnFailure(attributePath.GetError());
@@ -97,7 +101,7 @@ CHIP_ERROR ReadSingleClusterData(FabricIndex aAccessingFabricIndex, const Concre
         errorStatus.EncodeStatusIB(StatusIB(Protocols::InteractionModel::Status::Busy));
         attributeStatus.EndOfAttributeStatusIB();
         ReturnErrorOnFailure(attributeStatus.GetError());
-        return CHIP_NO_ERROR;
+        return attributeReport.EndOfAttributeReportIB().GetError();
     }
 
     return CHIP_ERROR_UNSUPPORTED_CHIP_FEATURE;
@@ -235,7 +239,7 @@ void TestReadInteraction::TestReadTimeout(nlTestSuite * apSuite, void * apContex
     NL_TEST_ASSERT(apSuite, chip::app::InteractionModelEngine::GetInstance()->GetNumActiveReadClients() == 1);
     NL_TEST_ASSERT(apSuite, ctx.GetExchangeManager().GetNumActiveExchanges() == 2);
 
-    ctx.GetExchangeManager().OnConnectionExpired(ctx.GetSessionBobToAlice());
+    ctx.GetExchangeManager().ExpireExchangesForSession(ctx.GetSessionBobToAlice());
 
     ctx.DrainAndServiceIO();
 
@@ -251,7 +255,7 @@ void TestReadInteraction::TestReadTimeout(nlTestSuite * apSuite, void * apContex
     chip::app::InteractionModelEngine::GetInstance()->GetReportingEngine().Run();
     ctx.DrainAndServiceIO();
 
-    ctx.GetExchangeManager().OnConnectionExpired(ctx.GetSessionAliceToBob());
+    ctx.GetExchangeManager().ExpireExchangesForSession(ctx.GetSessionAliceToBob());
 
     NL_TEST_ASSERT(apSuite, chip::app::InteractionModelEngine::GetInstance()->GetNumActiveReadHandlers() == 0);
 

@@ -26,6 +26,7 @@ AdvRouterAddr
 AdvSendAdvert
 AE
 aef
+AES
 algs
 alloc
 ameba
@@ -51,6 +52,7 @@ armeabi
 ARMmbed
 armv
 asdk
+AssertionError
 ASYNC
 att
 attId
@@ -81,6 +83,7 @@ BasicCHIPRegression
 baudrate
 BD
 BDX
+BDXDownloader
 BeagleBone
 befc
 bitbake
@@ -271,6 +274,7 @@ DevKitC
 DevKitM
 df
 dfu
+dhclient
 DHCP
 DHCPC
 DHCPv
@@ -279,6 +283,7 @@ dialout
 diffstat
 diffsyms
 dimmable
+dirname
 dirs
 disambiguated
 discoverable
@@ -290,6 +295,7 @@ DK
 DL
 DM
 DMG
+DMM
 DNS
 Dnsmasq
 dnsmasqd
@@ -312,6 +318,8 @@ eabi
 EB
 ECC
 ECD
+ECDH
+ECDSA
 EchoMessage
 EchoRequests
 EchoResponse
@@ -387,6 +395,7 @@ FOTA
 FreeRTOS
 FreeRTOSConfig
 fsl
+fstab
 fsync
 fullclean
 gcloud
@@ -430,6 +439,7 @@ Gv
 gz
 hardcoded
 hardknott
+hardwarever
 HardwareVersion
 HardwareVersionString
 hci
@@ -489,15 +499,15 @@ IPv
 ISCAN
 itemName
 iterable
+JDK
 jinja
 jlink
-jre
-JDK
 JLink
 JLinkExe
 JLinkRTTClient
 JN
 jpg
+jre
 js
 json
 JTAG
@@ -541,6 +551,8 @@ lightin
 LightingColor
 LightingState
 LinkSoftwareAndDocumentationPack
+LinuxOTAImageProcessor
+LinuxOTARequestorDriver
 LocalConfigDisabled
 localhost
 localstatedir
@@ -674,11 +686,11 @@ Onboarding
 onboardingcodes
 oneshot
 onnetwork
-openjdk
 OnOff
 OnOffClusterTest
 OnPlatformEvent
 OO
+openjdk
 OpenOCD
 OpenSSL
 OpenThread
@@ -693,10 +705,15 @@ optionsMask
 optionsOverride
 orgs
 OTA
+OTADownloader
+OTAImageProcessorDriver
+OTAImageProcessorInterface
 OTAProviderIpAddress
 OTAProviderNodeId
 OTAProviderSerialPort
 OTARequesterImpl
+OTARequestor
+OTARequestorDriver
 OTARequestorSerialPort
 OTBR
 otcli
@@ -743,8 +760,6 @@ prj
 ProductID
 ProductLabel
 ProductName
-productrev
-ProductRevision
 ProductURL
 proto
 protobuf
@@ -769,6 +784,7 @@ PyFunction
 pylint
 PyObject
 PyRun
+pytest
 QEMU
 Qorvo
 QPG
@@ -782,6 +798,7 @@ qvCHIP
 RADVD
 raspberryPi
 RasPi
+rAv
 RCP
 ReadConfigValue
 readelf
@@ -839,8 +856,8 @@ ScriptBinding
 SDC
 SDHC
 SDK
-sdkconfig
 SDK's
+sdkconfig
 SDKs
 SDKTARGETSYSROOT
 sdl
@@ -852,10 +869,14 @@ SERIALDEVICE
 SerialNumber
 ServiceId
 SetDns
+SetImageProcessorDelegate
+SetOtaRequestorDriver
 SetpointRaiseLower
+SetRequestorInstance
 SetUpPINCode
 SetupQRCode
 sexualized
+SHA
 shubhamdp
 SIGINT
 SiLabs
@@ -867,6 +888,7 @@ SLAAC
 SLTB
 SLWSTK
 SmartThings
+smoketest
 SMP
 socat
 socio
@@ -895,6 +917,7 @@ subcommand
 subcommands
 subdirectories
 subdirectory
+subfolder
 submodule
 submodules
 subprocess
@@ -982,7 +1005,6 @@ unblur
 UNBLUR
 uncommissioned
 unfocus
-userguide
 Unicast
 UniFlash
 unpair
@@ -994,6 +1016,7 @@ URI
 usbmodem
 USBtoUART
 uscif
+userguide
 USERINTERFACE
 UserLabel
 usermod

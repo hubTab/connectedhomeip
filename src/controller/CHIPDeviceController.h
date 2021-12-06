@@ -39,6 +39,7 @@
 #include <controller/OperationalCredentialsDelegate.h>
 #include <controller/SetUpCodePairer.h>
 #include <credentials/DeviceAttestationVerifier.h>
+#include <credentials/FabricTable.h>
 #include <lib/core/CHIPConfig.h>
 #include <lib/core/CHIPCore.h>
 #include <lib/core/CHIPPersistentStorageDelegate.h>
@@ -47,12 +48,11 @@
 #include <lib/support/Pool.h>
 #include <lib/support/SerializableIntegerSet.h>
 #include <lib/support/Span.h>
+#include <lib/support/ThreadOperationalDataset.h>
 #include <messaging/ExchangeMgr.h>
-#include <messaging/ExchangeMgrDelegate.h>
 #include <protocols/secure_channel/MessageCounterManager.h>
 #include <protocols/secure_channel/RendezvousParameters.h>
 #include <protocols/user_directed_commissioning/UserDirectedCommissioning.h>
-#include <transport/FabricTable.h>
 #include <transport/SessionManager.h>
 #include <transport/TransportMgr.h>
 #include <transport/raw/UDP.h>
@@ -108,7 +108,8 @@ struct ControllerInitParams
 
     uint16_t controllerVendorId;
 
-    FabricId fabricId = kUndefinedFabricId;
+    FabricIndex fabricIndex = kMinValidFabricIndex;
+    FabricId fabricId       = kUndefinedFabricId;
 };
 
 enum CommissioningStage : uint8_t
@@ -187,7 +188,8 @@ typedef void (*OnOpenCommissioningWindow)(void * context, NodeId deviceId, CHIP_
  *   and device pairing information for individual devices). Alternatively, this class can retrieve the
  *   relevant information when the application tries to communicate with the device
  */
-class DLL_EXPORT DeviceController : public Messaging::ExchangeMgrDelegate,
+class DLL_EXPORT DeviceController : public SessionReleaseDelegate,
+                                    public SessionRecoveryDelegate,
 #if CHIP_DEVICE_CONFIG_ENABLE_DNSSD
                                     public AbstractDnssdDiscoveryController,
 #endif
@@ -310,10 +312,16 @@ public:
      *                            the PIN code provied in the setupPayload).
      * @param[in] callback        The function to be called on success or failure of opening of commissioning window.
      *
+     * @param[in] readVIDPIDAttributes Should the API internally read VID and PID from the device while opening the
+     *                                 commissioning window. VID and PID is only needed for enchanced commissioning mode.
+     *                                 If this argument is `true`, and enhanced commissioning mode is used, the API will
+     *                                 read VID and PID from the device.
+     *
      * @return CHIP_ERROR         CHIP_NO_ERROR on success, or corresponding error
      */
     CHIP_ERROR OpenCommissioningWindowWithCallback(NodeId deviceId, uint16_t timeout, uint16_t iteration, uint16_t discriminator,
-                                                   uint8_t option, Callback::Callback<OnOpenCommissioningWindow> * callback);
+                                                   uint8_t option, Callback::Callback<OnOpenCommissioningWindow> * callback,
+                                                   bool readVIDPIDAttributes = false);
 
 #if CHIP_DEVICE_CONFIG_ENABLE_DNSSD
     void RegisterDeviceAddressUpdateDelegate(DeviceAddressUpdateDelegate * delegate) { mDeviceAddressUpdateDelegate = delegate; }
@@ -376,9 +384,11 @@ protected:
 
     uint16_t mVendorId;
 
-    //////////// ExchangeMgrDelegate Implementation ///////////////
-    void OnNewConnection(SessionHandle session, Messaging::ExchangeManager * mgr) override {}
-    void OnConnectionExpired(SessionHandle session, Messaging::ExchangeManager * mgr) override;
+    //////////// SessionReleaseDelegate Implementation ///////////////
+    void OnSessionReleased(SessionHandle session) override;
+
+    //////////// SessionRecoveryDelegate Implementation ///////////////
+    void OnFirstMessageDeliveryFailed(const SessionHandle & session) override;
 
 #if CHIP_DEVICE_CONFIG_ENABLE_DNSSD
     //////////// ResolverDelegate Implementation ///////////////
@@ -393,10 +403,21 @@ private:
     Callback::Callback<DefaultSuccessCallback> mOpenPairingSuccessCallback;
     Callback::Callback<DefaultFailureCallback> mOpenPairingFailureCallback;
 
+    static void OnPIDReadResponse(void * context, uint16_t value);
+    static void OnVIDReadResponse(void * context, uint16_t value);
+    static void OnVIDPIDReadFailureResponse(void * context, EmberAfStatus status);
+
+    CHIP_ERROR OpenCommissioningWindowInternal();
+
     // TODO - Support opening commissioning window simultaneously on multiple devices
     Callback::Callback<OnOpenCommissioningWindow> * mCommissioningWindowCallback = nullptr;
     SetupPayload mSetupPayload;
     NodeId mDeviceWithCommissioningWindowOpen;
+
+    uint16_t mCommissioningWindowTimeout;
+    uint16_t mCommissioningWindowIteration;
+
+    CommissioningWindowOption mCommissioningWindowOption;
 
     static void OnOpenPairingWindowSuccessResponse(void * context);
     static void OnOpenPairingWindowFailureResponse(void * context, uint8_t status);
@@ -412,12 +433,12 @@ private:
  *   will be stored.
  */
 class DLL_EXPORT DeviceCommissioner : public DeviceController,
+                                      public SessionCreationDelegate,
 #if CHIP_DEVICE_CONFIG_ENABLE_COMMISSIONER_DISCOVERY // make this commissioner discoverable
                                       public Protocols::UserDirectedCommissioning::InstanceNameResolver,
                                       public Protocols::UserDirectedCommissioning::UserConfirmationProvider,
 #endif
                                       public SessionEstablishmentDelegate
-
 {
 public:
     DeviceCommissioner();
@@ -470,9 +491,46 @@ public:
      *         in the Init() call.
      *
      * @param[in] remoteDeviceId        The remote device Id.
-     * @param[in] params                The Rendezvous connection parameters
+     * @param[in] rendezvousParams      The Rendezvous connection parameters
+     * @param[in] commssioningParams    The commissioning parameters (uses defualt if not supplied)
      */
-    CHIP_ERROR PairDevice(NodeId remoteDeviceId, RendezvousParameters & params);
+    CHIP_ERROR PairDevice(NodeId remoteDeviceId, RendezvousParameters & rendezvousParams);
+    CHIP_ERROR PairDevice(NodeId remoteDeviceId, RendezvousParameters & rendezvousParams,
+                          CommissioningParameters & commissioningParams);
+
+    /**
+     * @brief
+     *   Start establishing a PASE connection with a node for the purposes of commissioning.
+     *   Commissioners that wish to use the auto-commissioning functions should use the
+     *   supplied "PairDevice" functions above to automatically establish a connection then
+     *   perform commissioning. This function is intended to be use by commissioners that
+     *   are not using the supplied auto-commissioner.
+     *
+     *   This function is non-blocking. PASE is established once the DevicePairingDelegate
+     *   receives the OnPairingComplete call.
+     *
+     *   PASE connections can only be established with nodes that have their commissioning
+     *   window open. The PASE connection will fail if this window is not open and the
+     *   OnPairingComplete will be called with an error.
+     *
+     * @param[in] remoteDeviceId        The remote device Id.
+     * @param[in] rendezvousParams      The Rendezvous connection parameters
+     */
+    CHIP_ERROR EstablishPASEConnection(NodeId remoteDeviceId, RendezvousParameters & params);
+
+    /**
+     * @brief
+     *   Start the auto-commissioning process on a node after establishing a PASE connection.
+     *   This function is intended to be used in conjunction with the EstablishPASEConnection
+     *   function. It can be called either before or after the DevicePairingDelegate receives
+     *   the OnPairingComplete call. Commissioners that want to perform simple auto-commissioning
+     *   should use the supplied "PairDevice" functions above, which will establish the PASE
+     *   connection and commission automatically.
+     *
+     * @param[in] remoteDeviceId        The remote device Id.
+     * @param[in] params                The commissioning parameters
+     */
+    CHIP_ERROR Commission(NodeId remoteDeviceId, CommissioningParameters & params);
 
     CHIP_ERROR GetDeviceBeingCommissioned(NodeId deviceId, CommissioneeDeviceProxy ** device);
 
@@ -571,20 +629,22 @@ public:
 
     /**
      * @brief
+     *   Return the UDC Server instance
+     *
+     */
+    UserDirectedCommissioningServer * GetUserDirectedCommissioningServer() { return mUdcServer; }
+#endif // CHIP_DEVICE_CONFIG_ENABLE_COMMISSIONER_DISCOVERY
+
+#if CHIP_DEVICE_CONFIG_ENABLE_DNSSD
+    /**
+     * @brief
      *   Overrides method from AbstractDnssdDiscoveryController
      *
      * @param nodeData DNS-SD node information
      *
      */
     void OnNodeDiscoveryComplete(const chip::Dnssd::DiscoveredNodeData & nodeData) override;
-
-    /**
-     * @brief
-     *   Return the UDC Server instance
-     *
-     */
-    UserDirectedCommissioningServer * GetUserDirectedCommissioningServer() { return mUdcServer; }
-#endif // CHIP_DEVICE_CONFIG_ENABLE_COMMISSIONER_DISCOVERY
+#endif
 
     void RegisterPairingDelegate(DevicePairingDelegate * pairingDelegate) { mPairingDelegate = pairingDelegate; }
 
@@ -592,7 +652,7 @@ private:
     DevicePairingDelegate * mPairingDelegate;
 
     CommissioneeDeviceProxy * mDeviceBeingCommissioned = nullptr;
-    DeviceProxy * mDeviceOperational                   = nullptr;
+    OperationalDeviceProxy * mDeviceOperational        = nullptr;
 
     Credentials::CertificateType mCertificateTypeBeingRequested = Credentials::CertificateType::kUnknown;
 
@@ -608,6 +668,7 @@ private:
     bool mPairedDevicesUpdated;
 
     CommissioningStage mCommissioningStage = CommissioningStage::kSecurePairing;
+    bool mRunCommissioningAfterConnection  = false;
 
     BitMapObjectPool<CommissioneeDeviceProxy, kNumMaxActiveDevices> mCommissioneeDevicePool;
 
@@ -624,9 +685,10 @@ private:
 
     void OnSessionEstablishmentTimeout();
 
-    //////////// ExchangeMgrDelegate Implementation ///////////////
-    void OnNewConnection(SessionHandle session, Messaging::ExchangeManager * mgr) override;
-    void OnConnectionExpired(SessionHandle session, Messaging::ExchangeManager * mgr) override;
+    //////////// SessionCreationDelegate Implementation ///////////////
+    void OnNewSession(SessionHandle session) override;
+    //////////// SessionReleaseDelegate Implementation ///////////////
+    void OnSessionReleased(SessionHandle session) override;
 
     static void OnSessionEstablishmentTimeoutCallback(System::Layer * aLayer, void * aAppState);
 
@@ -688,7 +750,7 @@ private:
     /* Callback called when adding root cert to device results in failure */
     static void OnRootCertFailureResponse(void * context, uint8_t status);
 
-    static void OnDeviceConnectedFn(void * context, DeviceProxy * device);
+    static void OnDeviceConnectedFn(void * context, OperationalDeviceProxy * device);
     static void OnDeviceConnectionFailureFn(void * context, NodeId deviceId, CHIP_ERROR error);
 
     static void OnDeviceNOCChainGeneration(void * context, CHIP_ERROR status, const ByteSpan & noc, const ByteSpan & icac,

@@ -66,18 +66,23 @@ public:
     // Register for the Test Cluster cluster on all endpoints.
     TestAttrAccess() : AttributeAccessInterface(Optional<EndpointId>::Missing(), TestCluster::Id) {}
 
-    CHIP_ERROR Read(const ConcreteAttributePath & aPath, AttributeValueEncoder & aEncoder) override;
-    CHIP_ERROR Write(const ConcreteAttributePath & aPath, AttributeValueDecoder & aDecoder) override;
+    CHIP_ERROR Read(const ConcreteReadAttributePath & aPath, AttributeValueEncoder & aEncoder) override;
+    CHIP_ERROR Write(const ConcreteDataAttributePath & aPath, AttributeValueDecoder & aDecoder) override;
 
 private:
     CHIP_ERROR ReadListInt8uAttribute(AttributeValueEncoder & aEncoder);
     CHIP_ERROR WriteListInt8uAttribute(AttributeValueDecoder & aDecoder);
     CHIP_ERROR ReadListOctetStringAttribute(AttributeValueEncoder & aEncoder);
     CHIP_ERROR WriteListOctetStringAttribute(AttributeValueDecoder & aDecoder);
+    CHIP_ERROR ReadListLongOctetStringAttribute(AttributeValueEncoder & aEncoder);
     CHIP_ERROR ReadListStructOctetStringAttribute(AttributeValueEncoder & aEncoder);
     CHIP_ERROR WriteListStructOctetStringAttribute(AttributeValueDecoder & aDecoder);
     CHIP_ERROR ReadListNullablesAndOptionalsStructAttribute(AttributeValueEncoder & aEncoder);
     CHIP_ERROR WriteListNullablesAndOptionalsStructAttribute(AttributeValueDecoder & aDecoder);
+    CHIP_ERROR ReadStructAttribute(AttributeValueEncoder & aEncoder);
+    CHIP_ERROR WriteStructAttribute(AttributeValueDecoder & aDecoder);
+    CHIP_ERROR ReadNullableStruct(AttributeValueEncoder & aEncoder);
+    CHIP_ERROR WriteNullableStruct(AttributeValueDecoder & aDecoder);
 };
 
 TestAttrAccess gAttrAccess;
@@ -85,8 +90,12 @@ uint8_t gListUint8Data[kAttributeListLength];
 OctetStringData gListOctetStringData[kAttributeListLength];
 OctetStringData gListOperationalCert[kAttributeListLength];
 Structs::TestListStructOctet::Type listStructOctetStringData[kAttributeListLength];
+Structs::SimpleStruct::Type gStructAttributeValue = { 0,          false,      SimpleEnum::kValueA,
+                                                      ByteSpan(), CharSpan(), BitFlags<SimpleBitmap>(),
+                                                      0,          0 };
+NullableStruct::TypeInfo::Type gNullableStructAttributeValue;
 
-CHIP_ERROR TestAttrAccess::Read(const ConcreteAttributePath & aPath, AttributeValueEncoder & aEncoder)
+CHIP_ERROR TestAttrAccess::Read(const ConcreteReadAttributePath & aPath, AttributeValueEncoder & aEncoder)
 {
     switch (aPath.mAttributeId)
     {
@@ -102,6 +111,15 @@ CHIP_ERROR TestAttrAccess::Read(const ConcreteAttributePath & aPath, AttributeVa
     case ListNullablesAndOptionalsStruct::Id: {
         return ReadListNullablesAndOptionalsStructAttribute(aEncoder);
     }
+    case Struct::Id: {
+        return ReadStructAttribute(aEncoder);
+    }
+    case ListLongOctetString::Id: {
+        return ReadListLongOctetStringAttribute(aEncoder);
+    }
+    case NullableStruct::Id: {
+        return ReadNullableStruct(aEncoder);
+    }
     default: {
         break;
     }
@@ -110,7 +128,7 @@ CHIP_ERROR TestAttrAccess::Read(const ConcreteAttributePath & aPath, AttributeVa
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR TestAttrAccess::Write(const ConcreteAttributePath & aPath, AttributeValueDecoder & aDecoder)
+CHIP_ERROR TestAttrAccess::Write(const ConcreteDataAttributePath & aPath, AttributeValueDecoder & aDecoder)
 {
     switch (aPath.mAttributeId)
     {
@@ -126,6 +144,12 @@ CHIP_ERROR TestAttrAccess::Write(const ConcreteAttributePath & aPath, AttributeV
     case ListNullablesAndOptionalsStruct::Id: {
         return WriteListNullablesAndOptionalsStructAttribute(aDecoder);
     }
+    case Struct::Id: {
+        return WriteStructAttribute(aDecoder);
+    }
+    case NullableStruct::Id: {
+        return WriteNullableStruct(aDecoder);
+    }
     default: {
         break;
     }
@@ -134,9 +158,19 @@ CHIP_ERROR TestAttrAccess::Write(const ConcreteAttributePath & aPath, AttributeV
     return CHIP_NO_ERROR;
 }
 
+CHIP_ERROR TestAttrAccess::ReadNullableStruct(AttributeValueEncoder & aEncoder)
+{
+    return aEncoder.Encode(gNullableStructAttributeValue);
+}
+
+CHIP_ERROR TestAttrAccess::WriteNullableStruct(AttributeValueDecoder & aDecoder)
+{
+    return aDecoder.Decode(gNullableStructAttributeValue);
+}
+
 CHIP_ERROR TestAttrAccess::ReadListInt8uAttribute(AttributeValueEncoder & aEncoder)
 {
-    return aEncoder.EncodeList([](const TagBoundEncoder & encoder) -> CHIP_ERROR {
+    return aEncoder.EncodeList([](const auto & encoder) -> CHIP_ERROR {
         for (uint8_t index = 0; index < kAttributeListLength; index++)
         {
             ReturnErrorOnFailure(encoder.Encode(gListUint8Data[index]));
@@ -166,7 +200,7 @@ CHIP_ERROR TestAttrAccess::WriteListInt8uAttribute(AttributeValueDecoder & aDeco
 
 CHIP_ERROR TestAttrAccess::ReadListOctetStringAttribute(AttributeValueEncoder & aEncoder)
 {
-    return aEncoder.EncodeList([](const TagBoundEncoder & encoder) -> CHIP_ERROR {
+    return aEncoder.EncodeList([](const auto & encoder) -> CHIP_ERROR {
         for (uint8_t index = 0; index < kAttributeListLength; index++)
         {
             ByteSpan span(gListOctetStringData[index].Data(), gListOctetStringData[index].Length());
@@ -198,9 +232,54 @@ CHIP_ERROR TestAttrAccess::WriteListOctetStringAttribute(AttributeValueDecoder &
     return iter.GetStatus();
 }
 
+CHIP_ERROR TestAttrAccess::ReadListLongOctetStringAttribute(AttributeValueEncoder & aEncoder)
+{
+    // The ListOctetStringAttribute takes 512 bytes, and the whole attribute will exceed the IPv6 MTU, so we can test list chunking
+    // feature with this attribute.
+    char buf[513] = "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef" // 5
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef" // 10
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef" // 15
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef" // 20
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef" // 25
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef"
+                    "0123456789abcdef" // 30
+                    "0123456789abcdef"
+                    "0123456789abcdef"; // 32 * 16 = 512
+    return aEncoder.EncodeList([buf](const auto & encoder) -> CHIP_ERROR {
+        for (uint8_t index = 0; index < kAttributeListLength; index++)
+        {
+            ReturnErrorOnFailure(encoder.Encode(ByteSpan(chip::Uint8::from_const_char(buf), 512)));
+        }
+        return CHIP_NO_ERROR;
+    });
+}
+
 CHIP_ERROR TestAttrAccess::ReadListStructOctetStringAttribute(AttributeValueEncoder & aEncoder)
 {
-    return aEncoder.EncodeList([](const TagBoundEncoder & encoder) -> CHIP_ERROR {
+    return aEncoder.EncodeList([](const auto & encoder) -> CHIP_ERROR {
         for (uint8_t index = 0; index < kAttributeListLength; index++)
         {
             Structs::TestListStructOctet::Type structOctet;
@@ -246,7 +325,7 @@ CHIP_ERROR TestAttrAccess::WriteListStructOctetStringAttribute(AttributeValueDec
 
 CHIP_ERROR TestAttrAccess::ReadListNullablesAndOptionalsStructAttribute(AttributeValueEncoder & aEncoder)
 {
-    return aEncoder.EncodeList([](const TagBoundEncoder & encoder) -> CHIP_ERROR {
+    return aEncoder.EncodeList([](const auto & encoder) -> CHIP_ERROR {
         // Just encode a single default-initialized
         // entry for now.
         Structs::NullablesAndOptionalsStruct::Type entry;
@@ -260,6 +339,17 @@ CHIP_ERROR TestAttrAccess::WriteListNullablesAndOptionalsStructAttribute(Attribu
     // TODO Add yaml test case for NullablesAndOptionalsStruct list
     return CHIP_NO_ERROR;
 }
+
+CHIP_ERROR TestAttrAccess::ReadStructAttribute(AttributeValueEncoder & aEncoder)
+{
+    return aEncoder.Encode(gStructAttributeValue);
+}
+
+CHIP_ERROR TestAttrAccess::WriteStructAttribute(AttributeValueDecoder & aDecoder)
+{
+    return aDecoder.Decode(gStructAttributeValue);
+}
+
 } // namespace
 
 bool emberAfTestClusterClusterTestCallback(app::CommandHandler *, const app::ConcreteCommandPath & commandPath,
@@ -293,7 +383,7 @@ bool emberAfTestClusterClusterTestAddArgumentsCallback(CommandHandler * apComman
 {
     if (commandData.arg1 > UINT8_MAX - commandData.arg2)
     {
-        return emberAfSendImmediateDefaultResponse(EMBER_ZCL_STATUS_INVALID_ARGUMENT);
+        return emberAfSendImmediateDefaultResponse(EMBER_ZCL_STATUS_INVALID_COMMAND);
     }
 
     TestAddArgumentsResponse::Type responseData;
@@ -502,6 +592,44 @@ bool emberAfTestClusterClusterTestNullableOptionalRequestCallback(
     {
         emberAfSendImmediateDefaultResponse(EMBER_ZCL_STATUS_FAILURE);
     }
+    return true;
+}
+
+bool emberAfTestClusterClusterSimpleStructEchoRequestCallback(CommandHandler * commandObj, const ConcreteCommandPath & commandPath,
+                                                              const Commands::SimpleStructEchoRequest::DecodableType & commandData)
+{
+    Commands::SimpleStructResponse::Type response;
+    response.arg1.a = commandData.arg1.a;
+    response.arg1.b = commandData.arg1.b;
+    response.arg1.c = commandData.arg1.c;
+    response.arg1.d = commandData.arg1.d;
+    response.arg1.e = commandData.arg1.e;
+    response.arg1.f = commandData.arg1.f;
+    response.arg1.g = commandData.arg1.g;
+    response.arg1.h = commandData.arg1.h;
+
+    CHIP_ERROR err = commandObj->AddResponseData(commandPath, response);
+    if (err != CHIP_NO_ERROR)
+    {
+        emberAfSendImmediateDefaultResponse(EMBER_ZCL_STATUS_FAILURE);
+    }
+    return true;
+}
+
+bool emberAfTestClusterClusterTimedInvokeRequestCallback(CommandHandler * commandObj, const ConcreteCommandPath & commandPath,
+                                                         const Commands::TimedInvokeRequest::DecodableType & commandData)
+{
+    commandObj->AddStatus(commandPath, Protocols::InteractionModel::Status::Success);
+    return true;
+}
+
+bool emberAfTestClusterClusterTestSimpleOptionalArgumentRequestCallback(
+    CommandHandler * commandObj, const ConcreteCommandPath & commandPath,
+    const Commands::TestSimpleOptionalArgumentRequest::DecodableType & commandData)
+{
+    Protocols::InteractionModel::Status status = commandData.arg1.HasValue() ? Protocols::InteractionModel::Status::Success
+                                                                             : Protocols::InteractionModel::Status::InvalidValue;
+    commandObj->AddStatus(commandPath, status);
     return true;
 }
 

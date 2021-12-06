@@ -10,12 +10,12 @@ Before moving ahead, make sure you have
 ## Supported Devices
 
 -   This example supports ESP32 and ESP32C3. For details please check
-    [here](https://github.com/shubhamdp/connectedhomeip/tree/shubhamdp-patch-1/examples/all-clusters-app/esp32#supported-devices).
+    [here](https://github.com/project-chip/connectedhomeip/tree/master/examples/all-clusters-app/esp32#supported-devices).
 
 ## Building the Example Application
 
 -   If you are building for the first time please check
-    [Building the Example Application](https://github.com/shubhamdp/connectedhomeip/tree/shubhamdp-patch-1/examples/all-clusters-app/esp32#building-the-example-application)
+    [Building the Example Application](https://github.com/project-chip/connectedhomeip/tree/master/examples/all-clusters-app/esp32#building-the-example-application)
     guide.
 -   Otherwise, `idf.py build` works!
 
@@ -65,11 +65,11 @@ After this step device should reboot and start running hello world example.
 
 -   Build the [Linux OTA Provider](../../ota-provider-app/linux)
 -   Run the Linux OTA Provider with
-    [hello world OTA image](http://shubhamdp.github.io/esp_ota/esp32/hello-world-flash-in-ota-provider-partition.bin).
+    [hello world OTA image](http://shubhamdp.github.io/esp_ota/esp32/hello-world-for-linux-provider.bin).
     This OTA image is built for ESP32, it will not work on other devices.
 
 ```
-./out/debug/chip-ota-provider-app -f hello-world-flash-in-ota-provider-partition.bin
+./out/debug/chip-ota-provider-app -f hello-world-for-linux-provider.bin
 ```
 
 -   Provision the Linux OTA Provider using chip-tool

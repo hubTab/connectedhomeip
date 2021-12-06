@@ -30,8 +30,12 @@
 
 #include <app-common/zap-generated/att-storage.h>
 #include <app-common/zap-generated/ids/Attributes.h>
+#include <app/MessageDef/AttributeDataIB.h>
+#include <app/MessageDef/AttributeReportIB.h>
+#include <app/MessageDef/AttributeStatusIB.h>
 #include <app/util/mock/Constants.h>
 
+#include <app/AttributeAccessInterface.h>
 #include <app/ClusterInfo.h>
 #include <app/ConcreteAttributePath.h>
 #include <app/EventManagement.h>
@@ -70,6 +74,22 @@ AttributeId attributes[]  = {
     Clusters::Globals::Attributes::ClusterRevision::Id, Clusters::Globals::Attributes::FeatureMap::Id,
     Clusters::Globals::Attributes::ClusterRevision::Id, Clusters::Globals::Attributes::FeatureMap::Id
     // clang-format on
+};
+
+uint16_t mockClusterRevision = 1;
+uint32_t mockFeatureMap      = 0x1234;
+bool mockAttribute1          = true;
+int16_t mockAttribute2       = 42;
+uint64_t mockAttribute3      = 0xdeadbeef0000cafe;
+uint8_t mockAttribute4[256]  = {
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf,
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf,
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf,
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf,
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf,
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf,
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf,
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf,
 };
 
 } // namespace
@@ -188,3 +208,99 @@ uint8_t emberAfClusterIndex(chip::EndpointId endpoint, chip::ClusterId cluster, 
     }
     return UINT8_MAX;
 }
+
+namespace chip {
+namespace Test {
+
+CHIP_ERROR ReadSingleMockClusterData(FabricIndex aAccessingFabricIndex, const ConcreteAttributePath & aPath,
+                                     AttributeReportIBs::Builder & aAttributeReports,
+                                     AttributeValueEncoder::AttributeEncodeState * apEncoderState)
+{
+    bool dataExists =
+        (emberAfGetServerAttributeIndexByAttributeId(aPath.mEndpointId, aPath.mClusterId, aPath.mAttributeId) != UINT16_MAX);
+
+    ChipLogDetail(DataManagement, "Reading Mock Cluster %" PRIx32 ", Field %" PRIx32 " is dirty", aPath.mClusterId,
+                  aPath.mAttributeId);
+
+    if (!dataExists)
+    {
+        AttributeReportIB::Builder & attributeReport = aAttributeReports.CreateAttributeReport();
+        ReturnErrorOnFailure(aAttributeReports.GetError());
+        AttributeStatusIB::Builder & attributeStatus = attributeReport.CreateAttributeStatus();
+        ReturnErrorOnFailure(attributeReport.GetError());
+        AttributePathIB::Builder & attributePath = attributeStatus.CreatePath();
+        ReturnErrorOnFailure(attributeStatus.GetError());
+        attributePath.Endpoint(aPath.mEndpointId).Cluster(aPath.mClusterId).Attribute(aPath.mAttributeId).EndOfAttributePathIB();
+        ReturnErrorOnFailure(attributePath.GetError());
+        StatusIB::Builder & errorStatus = attributeStatus.CreateErrorStatus();
+        ReturnErrorOnFailure(attributeStatus.GetError());
+        errorStatus.EncodeStatusIB(StatusIB(Protocols::InteractionModel::Status::UnsupportedAttribute));
+        ReturnErrorOnFailure(errorStatus.GetError());
+        attributeStatus.EndOfAttributeStatusIB();
+        ReturnErrorOnFailure(attributeStatus.GetError());
+        return attributeReport.EndOfAttributeReportIB().GetError();
+    }
+
+    // Attribute 4 acts as a large attribute to trigger chunking.
+    if (aPath.mAttributeId == MockAttributeId(4))
+    {
+        AttributeValueEncoder::AttributeEncodeState state =
+            (apEncoderState == nullptr ? AttributeValueEncoder::AttributeEncodeState() : *apEncoderState);
+        AttributeValueEncoder valueEncoder(aAttributeReports, aAccessingFabricIndex, aPath, 0, state);
+
+        CHIP_ERROR err = valueEncoder.EncodeList([](const auto & encoder) -> CHIP_ERROR {
+            for (int i = 0; i < 6; i++)
+            {
+                ReturnErrorOnFailure(encoder.Encode(chip::ByteSpan(mockAttribute4, sizeof(mockAttribute4))));
+            }
+            return CHIP_NO_ERROR;
+        });
+
+        if (apEncoderState != nullptr)
+        {
+            *apEncoderState = valueEncoder.GetState();
+        }
+        return err;
+    }
+
+    AttributeReportIB::Builder & attributeReport = aAttributeReports.CreateAttributeReport();
+    ReturnErrorOnFailure(aAttributeReports.GetError());
+    AttributeDataIB::Builder & attributeData = attributeReport.CreateAttributeData();
+    ReturnErrorOnFailure(attributeReport.GetError());
+    attributeData.DataVersion(0);
+    AttributePathIB::Builder & attributePath = attributeData.CreatePath();
+    ReturnErrorOnFailure(attributeData.GetError());
+    attributePath.Endpoint(aPath.mEndpointId).Cluster(aPath.mClusterId).Attribute(aPath.mAttributeId).EndOfAttributePathIB();
+    ReturnErrorOnFailure(attributePath.GetError());
+
+    TLV::TLVWriter * writer = attributeData.GetWriter();
+
+    switch (aPath.mAttributeId)
+    {
+    case Clusters::Globals::Attributes::ClusterRevision::Id:
+        ReturnErrorOnFailure(writer->Put(TLV::ContextTag(to_underlying(AttributeDataIB::Tag::kData)), mockClusterRevision));
+        break;
+    case Clusters::Globals::Attributes::FeatureMap::Id:
+        ReturnErrorOnFailure(writer->Put(TLV::ContextTag(to_underlying(AttributeDataIB::Tag::kData)), mockFeatureMap));
+        break;
+    case MockAttributeId(1):
+        ReturnErrorOnFailure(writer->Put(TLV::ContextTag(to_underlying(AttributeDataIB::Tag::kData)), mockAttribute1));
+        break;
+    case MockAttributeId(2):
+        ReturnErrorOnFailure(writer->Put(TLV::ContextTag(to_underlying(AttributeDataIB::Tag::kData)), mockAttribute2));
+        break;
+    case MockAttributeId(3):
+        ReturnErrorOnFailure(writer->Put(TLV::ContextTag(to_underlying(AttributeDataIB::Tag::kData)), mockAttribute3));
+        break;
+    default:
+        // The key should found since we have checked above.
+        return CHIP_ERROR_KEY_NOT_FOUND;
+    }
+
+    attributeData.EndOfAttributeDataIB();
+    ReturnErrorOnFailure(attributeData.GetError());
+    return attributeReport.EndOfAttributeReportIB().GetError();
+}
+
+} // namespace Test
+} // namespace chip

@@ -53,6 +53,7 @@ idf_component_register(INCLUDE_DIRS
                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/wifi_network_diagnostics_server"
                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/software_diagnostics_server"
                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/general_diagnostics_server"                      
+                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/power-source-configuration-server"
                      PRIV_REQUIRES bt chip QRCode)
 
 get_filename_component(CHIP_ROOT ../third_party/connectedhomeip REALPATH)
@@ -98,6 +99,7 @@ pw_proto_library(locking_service
 )
 
 target_link_libraries(${COMPONENT_LIB} PUBLIC
+  attributes_service.nanopb_rpc
   device_service.nanopb_rpc
   button_service.nanopb_rpc
   locking_service.nanopb_rpc
@@ -106,6 +108,12 @@ target_link_libraries(${COMPONENT_LIB} PUBLIC
   pw_log
   pw_rpc.server
 )
+
+target_compile_options(${COMPONENT_LIB} PRIVATE
+                       "-DPW_RPC_ATTRIBUTE_SERVICE=2"
+                       "-DPW_RPC_BUTTON_SERVICE=1"
+                       "-DPW_RPC_DEVICE_SERVICE=1"
+                       "-DPW_RPC_LOCKING_SERVICE=1")
 
 else (CONFIG_ENABLE_PW_RPC)
 idf_component_register(PRIV_INCLUDE_DIRS
@@ -135,6 +143,7 @@ idf_component_register(PRIV_INCLUDE_DIRS
                       "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/on-off-server"
                       "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/operational-credentials-server"
                       "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/general-commissioning-server"
+                      "${CMAKE_SOURCE_DIR}/third_party/connectedhomeip/src/app/clusters/power-source-configuration-server"
                       PRIV_REQUIRES chip QRCode bt)
 
 set_property(TARGET ${COMPONENT_LIB} PROPERTY CXX_STANDARD 17)

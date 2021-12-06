@@ -210,6 +210,42 @@ uint16_t emberAfCopyList(ClusterId clusterId, EmberAfAttributeMetadata * am, boo
                            sizeof(entry->Type)); // InterfaceType
             break;
         }
+        case 0x0005: // ActiveHardwareFaults
+        {
+            entryLength = 1;
+            if (((index - 1) * entryLength) > (am->size - entryLength))
+            {
+                ChipLogError(Zcl, "Index %" PRId32 " is invalid.", index);
+                return 0;
+            }
+            entryOffset = static_cast<uint16_t>(entryOffset + ((index - 1) * entryLength));
+            copyListMember(dest, src, write, &entryOffset, entryLength); // ENUM8
+            break;
+        }
+        case 0x0006: // ActiveRadioFaults
+        {
+            entryLength = 1;
+            if (((index - 1) * entryLength) > (am->size - entryLength))
+            {
+                ChipLogError(Zcl, "Index %" PRId32 " is invalid.", index);
+                return 0;
+            }
+            entryOffset = static_cast<uint16_t>(entryOffset + ((index - 1) * entryLength));
+            copyListMember(dest, src, write, &entryOffset, entryLength); // ENUM8
+            break;
+        }
+        case 0x0007: // ActiveNetworkFaults
+        {
+            entryLength = 1;
+            if (((index - 1) * entryLength) > (am->size - entryLength))
+            {
+                ChipLogError(Zcl, "Index %" PRId32 " is invalid.", index);
+                return 0;
+            }
+            entryOffset = static_cast<uint16_t>(entryOffset + ((index - 1) * entryLength));
+            copyListMember(dest, src, write, &entryOffset, entryLength); // ENUM8
+            break;
+        }
         }
         break;
     }
@@ -282,6 +318,26 @@ uint16_t emberAfCopyList(ClusterId clusterId, EmberAfAttributeMetadata * am, boo
                 return 0;
             }
             entryLength = static_cast<uint16_t>(trustedRootCertificatesSpan->size());
+            break;
+        }
+        }
+        break;
+    }
+    case 0x002F: // Power Source Cluster
+    {
+        uint16_t entryOffset = kSizeLengthInBytes;
+        switch (am->attributeId)
+        {
+        case 0x0012: // ActiveBatteryFaults
+        {
+            entryLength = 1;
+            if (((index - 1) * entryLength) > (am->size - entryLength))
+            {
+                ChipLogError(Zcl, "Index %" PRId32 " is invalid.", index);
+                return 0;
+            }
+            entryOffset = static_cast<uint16_t>(entryOffset + ((index - 1) * entryLength));
+            copyListMember(dest, src, write, &entryOffset, entryLength); // ENUM8
             break;
         }
         }
@@ -536,6 +592,18 @@ uint16_t emberAfAttributeValueListSize(ClusterId clusterId, AttributeId attribut
             // Struct _NetworkInterfaceType
             entryLength = 48;
             break;
+        case 0x0005: // ActiveHardwareFaults
+            // uint8_t
+            entryLength = 1;
+            break;
+        case 0x0006: // ActiveRadioFaults
+            // uint8_t
+            entryLength = 1;
+            break;
+        case 0x0007: // ActiveNetworkFaults
+            // uint8_t
+            entryLength = 1;
+            break;
         }
         break;
     case 0x003E: // Operational Credentials Cluster
@@ -548,6 +616,15 @@ uint16_t emberAfAttributeValueListSize(ClusterId clusterId, AttributeId attribut
         case 0x0004: // TrustedRootCertificates
             // chip::ByteSpan
             return GetByteSpanOffsetFromIndex(buffer, 402, entryCount);
+            break;
+        }
+        break;
+    case 0x002F: // Power Source Cluster
+        switch (attributeId)
+        {
+        case 0x0012: // ActiveBatteryFaults
+            // uint8_t
+            entryLength = 1;
             break;
         }
         break;

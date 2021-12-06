@@ -128,21 +128,26 @@ public:
      *
      * This function will always call the OnDone function above on the registered callback
      * before returning.
+     *
+     * isTimedInvoke is true if and only if this is part of a Timed Invoke
+     * transaction (i.e. was preceded by a Timed Request).  If we reach here,
+     * the timer verification has already been done.
      */
     CHIP_ERROR OnInvokeCommandRequest(Messaging::ExchangeContext * ec, const PayloadHeader & payloadHeader,
-                                      System::PacketBufferHandle && payload);
+                                      System::PacketBufferHandle && payload, bool isTimedInvoke);
     CHIP_ERROR AddStatus(const ConcreteCommandPath & aCommandPath, const Protocols::InteractionModel::Status aStatus) override;
 
     CHIP_ERROR AddClusterSpecificSuccess(const ConcreteCommandPath & aCommandPath, ClusterStatus aClusterStatus) override;
 
     CHIP_ERROR AddClusterSpecificFailure(const ConcreteCommandPath & aCommandPath, ClusterStatus aClusterStatus) override;
 
-    CHIP_ERROR ProcessInvokeRequest(System::PacketBufferHandle && payload);
-    CHIP_ERROR PrepareCommand(const CommandPathParams & aCommandPathParams, bool aStartDataStruct = true);
+    CHIP_ERROR ProcessInvokeRequest(System::PacketBufferHandle && payload, bool isTimedInvoke);
+    CHIP_ERROR PrepareCommand(const ConcreteCommandPath & aCommandPath, bool aStartDataStruct = true);
     CHIP_ERROR FinishCommand(bool aStartDataStruct = true);
-    CHIP_ERROR PrepareStatus(const CommandPathParams & aCommandPathParams);
+    CHIP_ERROR PrepareStatus(const ConcreteCommandPath & aCommandPath);
     CHIP_ERROR FinishStatus();
     TLV::TLVWriter * GetCommandDataIBTLVWriter();
+    FabricIndex GetAccessingFabricIndex() const;
 
     /**
      * API for adding a data response.  The template parameter T is generally
@@ -157,13 +162,19 @@ public:
     template <typename CommandData>
     CHIP_ERROR AddResponseData(const ConcreteCommandPath & aRequestCommandPath, const CommandData & aData)
     {
-        ReturnErrorOnFailure(PrepareResponse(aRequestCommandPath, CommandData::GetCommandId()));
+        ConcreteCommandPath path = { aRequestCommandPath.mEndpointId, aRequestCommandPath.mClusterId, CommandData::GetCommandId() };
+        ReturnErrorOnFailure(PrepareCommand(path, false));
         TLV::TLVWriter * writer = GetCommandDataIBTLVWriter();
         VerifyOrReturnError(writer != nullptr, CHIP_ERROR_INCORRECT_STATE);
         ReturnErrorOnFailure(DataModel::Encode(*writer, TLV::ContextTag(to_underlying(CommandDataIB::Tag::kData)), aData));
 
         return FinishCommand(/* aEndDataStruct = */ false);
     }
+
+    /**
+     * Check whether the InvokeRequest we are handling is a timed invoke.
+     */
+    bool IsTimedInvoke() const { return mTimedRequest; }
 
 private:
     friend class TestCommandInteraction;
@@ -200,7 +211,6 @@ private:
 
     CHIP_ERROR ProcessCommandDataIB(CommandDataIB::Parser & aCommandElement);
     CHIP_ERROR SendCommandResponse();
-    CHIP_ERROR PrepareResponse(const ConcreteCommandPath & aRequestCommandPath, CommandId aResponseCommand);
     CHIP_ERROR AddStatusInternal(const ConcreteCommandPath & aCommandPath, const Protocols::InteractionModel::Status aStatus,
                                  const Optional<ClusterStatus> & aClusterStatus);
 

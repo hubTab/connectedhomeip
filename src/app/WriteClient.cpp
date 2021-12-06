@@ -36,17 +36,16 @@ CHIP_ERROR WriteClient::Init(Messaging::ExchangeManager * apExchangeMgr, Callbac
     VerifyOrReturnError(mpExchangeMgr == nullptr, CHIP_ERROR_INCORRECT_STATE);
     VerifyOrReturnError(mpExchangeCtx == nullptr, CHIP_ERROR_INCORRECT_STATE);
 
-    AttributeDataIBs::Builder AttributeDataIBsBuilder;
     System::PacketBufferHandle packet = System::PacketBufferHandle::New(chip::app::kMaxSecureSduLengthBytes);
     VerifyOrReturnError(!packet.IsNull(), CHIP_ERROR_NO_MEMORY);
 
     mMessageWriter.Init(std::move(packet));
 
     ReturnErrorOnFailure(mWriteRequestBuilder.Init(&mMessageWriter));
-
-    AttributeDataIBsBuilder = mWriteRequestBuilder.CreateAttributeDataIBsBuilder();
-    ReturnErrorOnFailure(AttributeDataIBsBuilder.GetError());
-
+    mWriteRequestBuilder.TimedRequest(false);
+    ReturnErrorOnFailure(mWriteRequestBuilder.GetError());
+    mWriteRequestBuilder.CreateWriteRequests();
+    ReturnErrorOnFailure(mWriteRequestBuilder.GetError());
     ClearExistingExchangeContext();
     mpExchangeMgr         = apExchangeMgr;
     mpCallback            = apCallback;
@@ -92,7 +91,7 @@ CHIP_ERROR WriteClient::ProcessWriteResponseMessage(System::PacketBufferHandle &
     System::PacketBufferTLVReader reader;
     TLV::TLVReader attributeStatusesReader;
     WriteResponseMessage::Parser writeResponse;
-    AttributeStatuses::Parser attributeStatusesParser;
+    AttributeStatusIBs::Parser attributeStatusesParser;
 
     reader.Init(std::move(payload));
     err = reader.Next();
@@ -135,24 +134,23 @@ exit:
 
 CHIP_ERROR WriteClient::PrepareAttribute(const AttributePathParams & attributePathParams)
 {
-    CHIP_ERROR err = CHIP_NO_ERROR;
-
-    AttributeDataIB::Builder AttributeDataIB = mWriteRequestBuilder.GetAttributeReportIBsBuilder().CreateAttributeDataIBBuilder();
-    SuccessOrExit(AttributeDataIB.GetError());
-    err = ConstructAttributePath(attributePathParams, AttributeDataIB);
-
-exit:
-    return err;
+    VerifyOrReturnError(attributePathParams.IsValidAttributePath(), CHIP_ERROR_INVALID_PATH_LIST);
+    AttributeDataIBs::Builder & writeRequests  = mWriteRequestBuilder.GetWriteRequests();
+    AttributeDataIB::Builder & attributeDataIB = writeRequests.CreateAttributeDataIBBuilder();
+    ReturnErrorOnFailure(writeRequests.GetError());
+    // TODO: Add attribute version support
+    attributeDataIB.DataVersion(0);
+    ReturnErrorOnFailure(attributeDataIB.GetError());
+    AttributePathIB::Builder & path = attributeDataIB.CreatePath();
+    ReturnErrorOnFailure(path.Encode(attributePathParams));
+    return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR WriteClient::FinishAttribute()
 {
     CHIP_ERROR err = CHIP_NO_ERROR;
 
-    AttributeDataIB::Builder AttributeDataIB = mWriteRequestBuilder.GetAttributeReportIBsBuilder().GetAttributeDataIBBuilder();
-
-    // TODO: Add attribute version support
-    AttributeDataIB.DataVersion(0);
+    AttributeDataIB::Builder AttributeDataIB = mWriteRequestBuilder.GetWriteRequests().GetAttributeDataIBBuilder();
     AttributeDataIB.EndOfAttributeDataIB();
     SuccessOrExit(err = AttributeDataIB.GetError());
     MoveToState(State::AddAttribute);
@@ -163,16 +161,7 @@ exit:
 
 TLV::TLVWriter * WriteClient::GetAttributeDataIBTLVWriter()
 {
-    return mWriteRequestBuilder.GetAttributeReportIBsBuilder().GetAttributeDataIBBuilder().GetWriter();
-}
-
-CHIP_ERROR WriteClient::ConstructAttributePath(const AttributePathParams & aAttributePathParams,
-                                               AttributeDataIB::Builder aAttributeDataIB)
-{
-    // We do not support wildcard write now, reject them on client side.
-    VerifyOrReturnError(!aAttributePathParams.HasWildcard() && aAttributePathParams.IsValidAttributePath(),
-                        CHIP_ERROR_INVALID_PATH_LIST);
-    return aAttributePathParams.BuildAttributePath(aAttributeDataIB.CreatePath());
+    return mWriteRequestBuilder.GetWriteRequests().GetAttributeDataIBBuilder().GetWriter();
 }
 
 CHIP_ERROR WriteClient::FinalizeMessage(System::PacketBufferHandle & aPacket)
@@ -180,11 +169,11 @@ CHIP_ERROR WriteClient::FinalizeMessage(System::PacketBufferHandle & aPacket)
     CHIP_ERROR err = CHIP_NO_ERROR;
     AttributeDataIBs::Builder AttributeDataIBsBuilder;
     VerifyOrExit(mState == State::AddAttribute, err = CHIP_ERROR_INCORRECT_STATE);
-    AttributeDataIBsBuilder = mWriteRequestBuilder.GetAttributeReportIBsBuilder().EndOfAttributeDataIBs();
+    AttributeDataIBsBuilder = mWriteRequestBuilder.GetWriteRequests().EndOfAttributeDataIBs();
     err                     = AttributeDataIBsBuilder.GetError();
     SuccessOrExit(err);
 
-    mWriteRequestBuilder.EndOfWriteRequestMessage();
+    mWriteRequestBuilder.IsFabricFiltered(false).EndOfWriteRequestMessage();
     err = mWriteRequestBuilder.GetError();
     SuccessOrExit(err);
 
@@ -257,13 +246,17 @@ CHIP_ERROR WriteClient::SendWriteRequest(SessionHandle session, System::Clock::T
 exit:
     if (err != CHIP_NO_ERROR)
     {
+        ChipLogError(DataManagement, "Write client failed to SendWriteRequest");
         ClearExistingExchangeContext();
     }
 
     if (session.IsGroupSession())
     {
         // Always shutdown on Group communication
-        Shutdown();
+        ChipLogDetail(DataManagement, "Closing on group Communication ");
+
+        // onDone is called
+        ShutdownInternal();
     }
 
     return err;
@@ -277,15 +270,23 @@ CHIP_ERROR WriteClient::OnMessageReceived(Messaging::ExchangeContext * apExchang
     // This should never fail because even if SendWriteRequest is called
     // back-to-back, the second call will call Close() on the first exchange,
     // which clears the OnMessageReceived callback.
+    VerifyOrExit(apExchangeContext == mpExchangeCtx, err = CHIP_ERROR_INCORRECT_STATE);
 
-    VerifyOrDie(apExchangeContext == mpExchangeCtx);
-
-    // Verify that the message is an Write Response. If not, this is an unexpected message.
-    // Signal the error through the error callback and shutdown the client.
-    VerifyOrExit(aPayloadHeader.HasMessageType(Protocols::InteractionModel::MsgType::WriteResponse),
-                 err = CHIP_ERROR_INVALID_MESSAGE_TYPE);
-
-    err = ProcessWriteResponseMessage(std::move(aPayload));
+    if (aPayloadHeader.HasMessageType(Protocols::InteractionModel::MsgType::WriteResponse))
+    {
+        err = ProcessWriteResponseMessage(std::move(aPayload));
+        SuccessOrExit(err);
+    }
+    else if (aPayloadHeader.HasMessageType(Protocols::InteractionModel::MsgType::StatusResponse))
+    {
+        StatusIB status;
+        err = StatusResponse::ProcessStatusResponse(std::move(aPayload), status);
+        SuccessOrExit(err);
+    }
+    else
+    {
+        err = CHIP_ERROR_INVALID_MESSAGE_TYPE;
+    }
 
 exit:
     if (mpCallback != nullptr)
@@ -335,7 +336,7 @@ CHIP_ERROR WriteClient::ProcessAttributeStatusIB(AttributeStatusIB::Parser & aAt
     }
     // TODO: (#11423) Attribute paths has a pattern of invalid paths, should add a function for checking invalid paths here.
     // NOTE: We don't support wildcard write for now, reject all wildcard paths.
-    VerifyOrExit(!attributePathParams.HasWildcard() && attributePathParams.IsValidAttributePath(),
+    VerifyOrExit(!attributePathParams.HasAttributeWildcard() && attributePathParams.IsValidAttributePath(),
                  err = CHIP_ERROR_IM_MALFORMED_ATTRIBUTE_PATH);
 
     err = aAttributeStatusIB.GetErrorStatus(&(StatusIBParser));

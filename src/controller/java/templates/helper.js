@@ -41,6 +41,10 @@ function convertBasicCTypeToJavaType(cType)
     return 'long';
   case 'bool':
     return 'boolean';
+  case 'float':
+    return 'float';
+  case 'double':
+    return 'double';
   default:
     error = 'Unhandled type ' + cType;
     throw error;
@@ -56,6 +60,10 @@ function convertBasicCTypeToJniType(cType)
     return 'jlong';
   case 'boolean':
     return 'jboolean';
+  case 'float':
+    return 'jfloat';
+  case 'double':
+    return 'jdouble';
   default:
     error = 'Unhandled type ' + cType;
     throw error;
@@ -71,6 +79,10 @@ function convertBasicCTypeToJavaBoxedType(cType)
     return 'Long';
   case 'boolean':
     return 'Boolean';
+  case 'float':
+    return 'Float';
+  case 'double':
+    return 'Double';
   default:
     error = 'Unhandled type ' + cType;
     throw error;
@@ -101,7 +113,9 @@ function asJavaBoxedType(type)
 
 function asJniBasicType(type, useBoxedTypes)
 {
-  if (StringHelper.isOctetString(type)) {
+  if (this.isOptional) {
+    return 'jobject';
+  } else if (StringHelper.isOctetString(type)) {
     return 'jbyteArray';
   } else if (StringHelper.isCharString(type)) {
     return 'jstring';
@@ -187,6 +201,14 @@ function convertCTypeToJniSignature(cType, useBoxedTypes)
     return 'Ljava/lang/Integer;';
   case 'Long':
     return 'Ljava/lang/Long;';
+  case 'double':
+    return 'D';
+  case 'Double':
+    return 'Ljava/lang/Double;';
+  case 'float':
+    return 'F';
+  case 'Float':
+    return 'Ljava/lang/Float;';
   default:
     error = 'Unhandled Java type ' + javaType + ' for C type ' + cType;
     throw error;
@@ -221,28 +243,20 @@ function notLastSupportedEntryTypes(context, options)
   }
 }
 
-function omitCommaForFirstNonStatusCommand(id, index)
+function notLastSupportedCommandResponseType(items, options)
 {
-  let promise = templateUtil.ensureZclPackageId(this)
-                    .then((pkgId) => { return queryCommand.selectCommandArgumentsByCommandId(this.global.db, id, pkgId) })
-                    .catch(err => {
-                      console.log(err);
-                      throw err;
-                    })
-                    .then((result) => {
-                      // Currently, we omit array types, so don't count it as a valid non-status command.
-                      let firstNonStatusCommandIndex = result.findIndex((command) => !command.isArray);
-                      if (firstNonStatusCommandIndex == -1 || firstNonStatusCommandIndex != index) {
-                        return ", ";
-                      }
-                      return "";
-                    })
-                    .catch(err => {
-                      console.log(err);
-                      throw err;
-                    });
+  if (items.length == 0) {
+    return
+  }
 
-  return templateUtil.templatePromise(this.global, promise);
+  let lastIndex = items.length - 1;
+  while (items[lastIndex].isArray) {
+    lastIndex--;
+  }
+
+  if (this.index != lastIndex) {
+    return options.fn(this);
+  }
 }
 
 //
@@ -258,5 +272,5 @@ exports.convertBasicCTypeToJniType             = convertBasicCTypeToJniType;
 exports.convertCTypeToJniSignature             = convertCTypeToJniSignature;
 exports.convertBasicCTypeToJavaBoxedType       = convertBasicCTypeToJavaBoxedType;
 exports.convertAttributeCallbackTypeToJavaName = convertAttributeCallbackTypeToJavaName;
-exports.omitCommaForFirstNonStatusCommand      = omitCommaForFirstNonStatusCommand;
 exports.notLastSupportedEntryTypes             = notLastSupportedEntryTypes;
+exports.notLastSupportedCommandResponseType    = notLastSupportedCommandResponseType;
