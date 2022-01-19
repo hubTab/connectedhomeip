@@ -69,7 +69,8 @@
         "lo-devices.xml",
         "types.xml",
         "zll-devices.xml",
-        "zll.xml"
+        "zll.xml",
+        "access.xml"
     ],
     "manufacturersXml": "../../../../third_party/zap/repo/zcl-builtin/shared/manufacturers.xml",
     "options": {

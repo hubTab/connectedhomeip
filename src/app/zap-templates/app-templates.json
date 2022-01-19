@@ -40,6 +40,11 @@
             "output": "attribute-size.cpp"
         },
         {
+            "path": "templates/app/accesscontrol-generation-src.zapt",
+            "name": "ZCL accesscontrol-generation",
+            "output": "accesscontrol-generation.cppx"
+        },
+        {
             "path": "templates/app/callback-stub-src.zapt",
             "name": "ZCL callback-stub source",
             "output": "callback-stub.cpp"

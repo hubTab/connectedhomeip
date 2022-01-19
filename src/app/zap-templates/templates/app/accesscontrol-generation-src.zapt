@@ -1,0 +1,183 @@
+{{> header}}
+
+namespace chip {
+namespace access {
+
+struct Privilege
+{
+  kNone,
+  kView,
+  kOperate,
+  kAdmin,
+};
+
+struct AccessMetadata
+{
+  Privilege read_privilege;
+  Privilege write_privilege;
+  Privilege invoke_privilege;
+  bool is_fabric_scoped;
+  bool is_fabric_sensitive;
+};
+
+struct AccessMetadataException {
+  uint32_t cluster_id;
+  uint32_t element_id;
+  AccessMetadata overriden_value;
+
+  bool matches(uint32_t cluster_id, uint32_t element_id)
+  {
+      return ((this->cluster_id == cluster_id) && (this->element_id == element_id));
+  }
+};
+
+// Attribute Access Exceptions
+AccessMetadataException gAttributeAccessMetadataExceptions[] =
+{
+{{#zcl_clusters}}
+{{#zcl_attributes}}
+{{#access_aggregate entity="attribute" ignoreEmpty="true" includeDefault="false"}}
+  {
+    .cluster_id = {{asHex ../../code 4}}, // {{../../name}}
+    .element_id = {{asHex ../code 4}}, // {{../name}}
+    .overriden_value =
+    {
+      {{#if (isStrEqual readHighest "NONE")}}
+      .read_privilege = Privilege::kNone,
+      {{else if (isStrEqual readHighest "administer")}}
+      .read_privilege = Privilege::kAdmin,
+      {{else if (isStrEqual readHighest "operate")}}
+      .read_privilege = Privilege::kOperate
+      {{else if (isStrEqual readHighest "view")}}
+      .read_privilege = Privilege::kView,
+      {{else if (isStrEqual readHighest "manage")}}
+      .read_privilege = Privilege::kManage,
+      {{/if}}
+      {{#if (isStrEqual writeHighest "NONE")}}
+      .write_privilege = Privilege::kNone,
+      {{else if (isStrEqual writeHighest "administer")}}
+      .write_privilege = Privilege::kAdmin,
+      {{else if (isStrEqual writeHighest "operate")}}
+      .write_privilege = Privilege::kOperate
+      {{else if (isStrEqual writeHighest "view")}}
+      .write_privilege = Privilege::kView,
+      {{else if (isStrEqual writeHighest "manage")}}
+      .write_privilege = Privilege::kManage,
+      {{/if}}
+      {{#if (isStrEqual invokeHighest "NONE")}}
+      .invoke_privilege = Privilege::kNone,
+      {{else if (isStrEqual invokeHighest "administer")}}
+      .invoke_privilege = Privilege::kAdmin,
+      {{else if (isStrEqual invokeHighest "operate")}}
+      .invoke_privilege = Privilege::kOperate
+      {{else if (isStrEqual invokeHighest "view")}}
+      .invoke_privilege = Privilege::kView,
+      {{else if (isStrEqual invokeHighest "manage")}}
+      .invoke_privilege = Privilege::kManage,
+      {{/if}}
+      .is_fabric_scoped = {{fabric-scoped}},
+      .is_fabric_sensitive = {{fabric-sensitive}},
+    }
+  },
+{{/access_aggregate}}
+{{/zcl_attributes}}
+{{/zcl_clusters}}
+}
+
+// Command Access Exceptions
+AccessMetadataException gCommandAccessMetadataExceptions[] =
+{
+{{#zcl_clusters}}
+{{#zcl_commands}}
+{{#access_aggregate entity="command" ignoreEmpty="true" includeDefault="false"}}
+  {
+    .cluster_id = {{asHex ../../code 4}}, // {{../../name}}
+    .element_id = {{asHex ../code 4}}, // {{../name}}
+    .overriden_value =
+    {
+      {{#if (isStrEqual readHighest "NONE")}}
+      .read_privilege = Privilege::kNone,
+      {{else if (isStrEqual readHighest "administer")}}
+      .read_privilege = Privilege::kAdmin,
+      {{else if (isStrEqual readHighest "operate")}}
+      .read_privilege = Privilege::kOperate
+      {{else if (isStrEqual readHighest "view")}}
+      .read_privilege = Privilege::kView,
+      {{else if (isStrEqual readHighest "manage")}}
+      .read_privilege = Privilege::kManage,
+      {{/if}}
+      {{#if (isStrEqual writeHighest "NONE")}}
+      .write_privilege = Privilege::kNone,
+      {{else if (isStrEqual writeHighest "administer")}}
+      .write_privilege = Privilege::kAdmin,
+      {{else if (isStrEqual writeHighest "operate")}}
+      .write_privilege = Privilege::kOperate
+      {{else if (isStrEqual writeHighest "view")}}
+      .write_privilege = Privilege::kView,
+      {{else if (isStrEqual writeHighest "manage")}}
+      .write_privilege = Privilege::kManage,
+      {{/if}}
+      {{#if (isStrEqual invokeHighest "NONE")}}
+      .invoke_privilege = Privilege::kNone,
+      {{else if (isStrEqual invokeHighest "administer")}}
+      .invoke_privilege = Privilege::kAdmin,
+      {{else if (isStrEqual invokeHighest "operate")}}
+      .invoke_privilege = Privilege::kOperate
+      {{else if (isStrEqual invokeHighest "view")}}
+      .invoke_privilege = Privilege::kView,
+      {{else if (isStrEqual invokeHighest "manage")}}
+      .invoke_privilege = Privilege::kManage,
+      {{/if}}
+      .is_fabric_scoped = {{fabric-scoped}},
+      .is_fabric_sensitive = {{fabric-sensitive}},
+    }
+  },
+{{/access_aggregate}}
+{{/zcl_commands}}
+{{/zcl_clusters}}
+}
+
+AccessMetadata GetAttributeAccessMetadata(uint32_t cluster_id, uint32_t attribute_id)
+{
+    AccessMetadata result;
+    result.read_privilege = Privilege::kView;
+    result.write_privilege = Privilege::kOperate;
+    result.invoke_privilege = Privilege::kNone;
+    result.is_fabric_scoped = false;
+    result.is_fabric_sensitive = false;
+
+    for (AccessMetadataException & exception : gAttributeAccessMetadataExceptions)
+    {
+        if (exception.matches(cluster_id, attribute_id))
+        {
+          result = exception.overriden_value;
+          break;
+        }
+    }
+
+    return result;
+}
+
+AccessMetadata GetCommandAccessMetadata(uint32_t cluster_id, uint32_t command_id)
+{
+    AccessMetadata result;
+    result.read_privilege = Privilege::kNone;
+    result.write_privilege = Privilege::kNone;
+    result.invoke_privilege = Privilege::kOperate;
+    result.is_fabric_scoped = false;
+    result.is_fabric_sensitive = false;
+
+    for (AccessMetadataException & exception : gCommandAccessMetadataExceptions)
+    {
+        if (exception.matches(cluster_id, command_id))
+        {
+          result = exception.overriden_value;
+          break;
+        }
+    }
+
+    return result;
+}
+
+} // namespace access
+} // namespace chip
