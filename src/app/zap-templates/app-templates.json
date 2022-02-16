@@ -50,6 +50,26 @@
     ],
     "templates": [
         {
+            "path": "templates/app/st/clusters/init.zapt",
+            "name": "ST Matter Lua Library Generation Clusters",
+            "output": "st/clusters/init.lua"
+        },
+        {
+            "path": "templates/app/st/clusters/cluster/init.zapt",
+            "name": "ST Matter Lua Library Generation Cluster Server",
+            "output": "st/clusters/cluster/init.lua"
+            },
+        {
+            "path": "templates/app/st/clusters/cluster/server/attributes/init.zapt",
+            "name": "ST Matter Lua Library Generation Cluster Server Attributes",
+            "output": "st/clusters/cluster/server/attributes/init.lua"
+        },
+        {
+      "path": "templates/app/st/clusters/cluster/server/attributes/attributes.zapt",
+      "name": "ST Matter Lua Library Generation Cluster Server Attributes All",
+      "output": "st/clusters/cluster/server/attributes/attributes.lua"
+        },    
+        {
             "path": "templates/app/callbacks/PluginApplicationCallbacks.zapt",
             "name": "Matter Application Callbacks header",
             "output": "PluginApplicationCallbacks.h"
