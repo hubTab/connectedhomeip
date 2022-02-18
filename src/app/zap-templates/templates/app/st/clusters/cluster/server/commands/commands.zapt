@@ -1,0 +1,158 @@
+{{> header}}
+{{#chip_server_clusters}}
+{{#if (isStrEqual name "On/Off")}}
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+-- http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+{{#zcl_commands_source_client}}
+==============================================================================================================================================================
+SOURCE_FILE_PATH="st\matter\generated\zap_clusters\\{{asUpperCamelCase ../name}}\server\commands\\{{asUpperCamelCase name}}.lua"
+==============================================================================================================================================================
+local data_types = require "st.matter.data_types"
+local utils = require "st.matter.utils"
+local log = require "log"
+{{#zcl_command_arguments}}
+local {{type}}Type = require "st.matter.generated.zap_clusters.{{asUpperCamelCase ../../name}}.types.{{type}}"
+{{/zcl_command_arguments}}
+
+-----------------------------------------------------------
+-- {{asUpperCamelCase ../name}} command {{asUpperCamelCase name}}
+-----------------------------------------------------------
+
+--- @class st.matter.generated.zap_clusters.{{asUpperCamelCase ../name}}.{{asUpperCamelCase name}}
+--- @alias {{asUpperCamelCase name}}
+---
+--- @field public ID number {{asHex code 4}} the ID of this command
+--- @field public NAME string "{{asUpperCamelCase name}}" the name of this command
+{{#zcl_command_arguments}}
+--- @field public {{asSnakeCaseLower label}} "st.matter.generated.zap_clusters.{{asUpperCamelCase ../../name}}.types.{{type}}"
+{{/zcl_command_arguments}}
+{{!--
+see ./test/helper-api-baseline.json-
+{{as_cli_type type}}
+{{as_type type}}
+{{as_underlying_type type}}
+{{as_underlying_zcl_type type}}
+{{as_underlying_zcl_type_ca_always_present_with_presentif type}}
+{{as_underlying_zcl_type_ca_not_always_present_no_presentif type}},
+{{as_underlying_zcl_type_ca_not_always_present_with_presentif type}},
+{{as_underlying_zcl_type_command_argument_always_present type}},
+{{as_underlying_zcl_type_command_argument_always_present_with_presentif type}},
+{{as_underlying_zcl_type_command_argument_not_always_present_no_presentif type}},
+{{as_underlying_zcl_type_command_argument_not_always_present_with_presentif type}},
+{{as_underlying_zcl_type_command_is_not_fixed_length_but_command_argument_is_always_present type}},
+{{as_underlying_zcl_type_if_command_is_not_fixed_length type}},
+{{as_zcl_cli_type type}},
+--}}
+local {{asUpperCamelCase name}} = {}
+
+{{asUpperCamelCase name}}.NAME = "{{asUpperCamelCase name}}"
+{{asUpperCamelCase name}}.ID = {{asHex code 4}}
+{{asUpperCamelCase name}}.args_def = {
+{{!--third_party\zap\repo\src-electron\db\db-mapping.js--}}
+{{#zcl_command_arguments}}
+  {
+    name = "{{asSnakeCaseLower label}}",
+    field_id = "{{fieldIdentifier}}",
+    optional = {{#if isOptional}}true{{else}}false{{/if}},
+    data_type = {{type}}Type,
+    is_complex = {{#if_chip_complex}}true{{else}}false{{/if_chip_complex}},
+  },
+{{!--
+      {{as_symbol label}} = {{type}} {{name}} {{asUpperCamelCase label}} {{asLowerCamelCase label}} {{zapTypeToEncodableClusterObjectType type ns=parent.parent.name}}
+      {{#if_is_struct type}}
+      {{name}} is struct
+      {{#zcl_struct_items_by_struct_name type}}
+          {{parent.name}}::{{label}} struct item
+      {{/zcl_struct_items_by_struct_name}}
+      {{else}}
+      {{name}} is not struct
+      {{/if_is_struct}}
+ --}}
+{{/zcl_command_arguments}}
+}
+
+function {{asUpperCamelCase name}}:get_fields()
+  local fields = {}
+  for _, v in ipairs(self.args_def) do
+    if self[v.name] ~= nil then
+      table.insert(fields, self[v.name])
+    end
+  end
+  return fields
+end
+
+{{asUpperCamelCase name}}.get_length = utils.length_from_fields
+{{asUpperCamelCase name}}._serialize = utils.serialize_from_fields
+{{asUpperCamelCase name}}.pretty_print = utils.print_from_fields
+
+function {{asUpperCamelCase name}}:set_field_names()
+  for _, v in ipairs(self.args_def) do
+    if self[v.name] ~= nil then
+      self[v.name].field_name = v.name
+    end
+  end
+end
+
+--- Initialize the {{asUpperCamelCase name}} command
+---
+--- @param self {{asUpperCamelCase name}} the template class for this command
+--- @param device st.matter.Device the device to build this message to
+{{#zcl_command_arguments}}
+--- @param {{asSnakeCaseLower label}} "st.matter.generated.zap_clusters.{{asUpperCamelCase ../../name}}.types.{{type}}"
+{{/zcl_command_arguments}}
+--- @return st.matter.generated.zap_clusters.InteractionRequest of type INVOKE
+function {{asUpperCamelCase name}}:init(device, endpoint_id)
+  local out = {}
+  local args = { {{#zcl_command_arguments}}{{asSnakeCaseLower label}},{{/zcl_command_arguments}} }
+  if #args > #self.args_def then
+    error(self.NAME .. " received too many arguments")
+  end
+  for i,v in ipairs(self.args_def) do
+    if v.optional and args[i] == nil then
+      out[v.name] = nil
+    elseif not v.optional and args[i] == nil then
+      out[v.name] = data_types.validate_or_build_type(v.default, v.data_type, v.name)
+    else
+      out[v.name] = data_types.validate_or_build_type(args[i], v.data_type, v.name)
+      out[v.name].field_id = v.field_id
+    end
+  end
+  setmetatable(out, {
+    __index = {{asUpperCamelCase name}},
+    __tostring = {{asUpperCamelCase name}}.pretty_print
+  })
+  out:set_field_names()
+  return self._cluster:build_cluster_command(
+    device,
+    out,
+    endpoint_id,
+    self._cluster.ID,
+    self.ID
+  )
+end
+
+function {{asUpperCamelCase name}}:set_parent_cluster(cluster)
+  self._cluster = cluster
+  return self
+end
+
+setmetatable({{asUpperCamelCase name}}, {__call = {{asUpperCamelCase name}}.init})
+
+return {{asUpperCamelCase name}}
+
+{{/zcl_commands_source_client}}
+
+{{/if}}
+{{/chip_server_clusters}}

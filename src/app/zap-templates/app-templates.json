@@ -1,118 +1,144 @@
 {
-    "name": "CHIP Application templates",
-    "version": "chip-v1",
-    "helpers": [
-        "partials/helper.js",
-        "common/ListHelper.js",
-        "common/StringHelper.js",
-        "common/ChipTypesHelper.js",
-        "templates/app/helper.js",
-        "templates/chip/helper.js"
-    ],
-    "override": "common/override.js",
-    "partials": [
-        {
-            "name": "header",
-            "path": "partials/header.zapt"
-        },
-        {
-            "name": "clusters_header",
-            "path": "partials/clusters_header.zapt"
-        },
-        {
-            "name": "cluster_header",
-            "path": "partials/cluster_header.zapt"
-        },
-        {
-            "name": "im_command_handler_cluster_commands",
-            "path": "partials/im_command_handler_cluster_commands.zapt"
-        },
-        {
-            "name": "idl_structure_definition",
-            "path": "partials/idl/structure_definition.zapt"
-        },
-        {
-            "name": "idl_structure_member",
-            "path": "partials/idl/structure_member.zapt"
-        },
-        {
-            "name": "idl_command_request_response",
-            "path": "partials/idl/command_request_response.zapt"
-        },
-        {
-            "name": "idl_command_request_struct",
-            "path": "partials/idl/command_request_struct.zapt"
-        },
-        {
-            "name": "idl_command_response_struct",
-            "path": "partials/idl/command_response_struct.zapt"
-        }
-    ],
-    "templates": [
-        {
-            "path": "templates/app/st/clusters/init.zapt",
-            "name": "ST Matter Lua Library Generation Clusters",
-            "output": "st/clusters/init.lua"
-        },
-        {
-            "path": "templates/app/st/clusters/cluster/init.zapt",
-            "name": "ST Matter Lua Library Generation Cluster Server",
-            "output": "st/clusters/cluster/init.lua"
-            },
-        {
-            "path": "templates/app/st/clusters/cluster/server/attributes/init.zapt",
-            "name": "ST Matter Lua Library Generation Cluster Server Attributes",
-            "output": "st/clusters/cluster/server/attributes/init.lua"
-        },
-        {
+  "name": "CHIP Application templates",
+  "version": "chip-v1",
+  "helpers": [
+    "partials/helper.js",
+    "common/ListHelper.js",
+    "common/StringHelper.js",
+    "common/ChipTypesHelper.js",
+    "templates/app/helper.js",
+    "templates/chip/helper.js",
+    "../../../third_party/zap/repo/test/gen-template/dotdot/addon-helper.js"
+  ],
+  "override": "common/override.js",
+  "partials": [
+    {
+      "name": "header",
+      "path": "partials/header.zapt"
+    },
+    {
+      "name": "clusters_header",
+      "path": "partials/clusters_header.zapt"
+    },
+    {
+      "name": "cluster_header",
+      "path": "partials/cluster_header.zapt"
+    },
+    {
+      "name": "im_command_handler_cluster_commands",
+      "path": "partials/im_command_handler_cluster_commands.zapt"
+    },
+    {
+      "name": "idl_structure_definition",
+      "path": "partials/idl/structure_definition.zapt"
+    },
+    {
+      "name": "idl_structure_member",
+      "path": "partials/idl/structure_member.zapt"
+    },
+    {
+      "name": "idl_command_request_response",
+      "path": "partials/idl/command_request_response.zapt"
+    },
+    {
+      "name": "idl_command_request_struct",
+      "path": "partials/idl/command_request_struct.zapt"
+    },
+    {
+      "name": "idl_command_response_struct",
+      "path": "partials/idl/command_response_struct.zapt"
+    }
+  ],
+  "templates": [
+    {
+      "path": "templates/app/st/clusters/init.zapt",
+      "name": "ST Matter Lua Library Generation Clusters",
+      "output": "st/clusters/init.lua"
+    },
+    {
+      "path": "templates/app/st/clusters/cluster/init.zapt",
+      "name": "ST Matter Lua Library Generation Cluster Server",
+      "output": "st/clusters/cluster/init.lua"
+    },
+    {
+      "path": "templates/app/st/clusters/cluster/server/attributes/init.zapt",
+      "name": "ST Matter Lua Library Generation Cluster Server Attributes",
+      "output": "st/clusters/cluster/server/attributes/init.lua"
+    },
+    {
       "path": "templates/app/st/clusters/cluster/server/attributes/attributes.zapt",
       "name": "ST Matter Lua Library Generation Cluster Server Attributes All",
       "output": "st/clusters/cluster/server/attributes/attributes.lua"
-        },    
-        {
-            "path": "templates/app/callbacks/PluginApplicationCallbacks.zapt",
-            "name": "Matter Application Callbacks header",
-            "output": "PluginApplicationCallbacks.h"
-        },
-        {
-            "path": "templates/app/callback-stub-src.zapt",
-            "name": "ZCL callback-stub source",
-            "output": "callback-stub.cpp"
-        },
-        {
-            "path": "templates/app/endpoint_config.zapt",
-            "name": "ZCL endpoint configuration",
-            "output": "endpoint_config.h"
-        },
-        {
-            "path": "templates/app/gen_config.zapt",
-            "name": "ZCL gen_config header",
-            "output": "gen_config.h"
-        },
-        {
-            "path": "templates/app/gen_tokens.zapt",
-            "name": "ZCL gen_tokens header",
-            "output": "gen_tokens.h"
-        },
-        {
-            "path": "templates/app/CHIPClientCallbacks.zapt",
-            "name": "CHIP Client Callbacks header",
-            "output": "CHIPClientCallbacks.h"
-        },
-        {
-            "path": "templates/app/im-cluster-command-handler.zapt",
-            "name": "CHIP Client Callbacks for Interaction Model",
-            "output": "IMClusterCommandHandler.cpp"
-        },
-        {
-            "path": "templates/app/CHIPClusters.zapt",
-            "name": "C++ ZCL API Header",
-            "output": "CHIPClusters.h"
-        },
-        {
-            "path": "templates/app/MatterIDL.zapt",
-            "name": "Human-readable Matter IDL",
-            "output": "Clusters.matter"
-        }
-    ]
+    },
+    {
+      "path": "templates/app/st/clusters/cluster/server/commands/init.zapt",
+      "name": "ST Matter Lua Library Generation Cluster Server Commands",
+      "output": "st/clusters/cluster/server/commands/init.lua"
+    },
+    {
+      "path": "templates/app/st/clusters/cluster/server/commands/commands.zapt",
+      "name": "ST Matter Lua Library Generation Cluster Server Commands All",
+      "output": "st/clusters/cluster/server/commands/commands.lua"
+    },
+    {
+      "path": "../../../third_party/zap/repo/test/gen-template/zigbee/zap-cluster-command-parser-2.c.zapt",
+      "name": "Command struct parser functions, ver 2",
+      "output": "st/clusters/zap-cluster-command-parser-2.c"
+    },
+    {
+      "path": "templates/app/enums.zapt",
+      "name": "ZCL enums header",
+      "output": "st/clusters/enums.h"
+    },
+    {
+      "path": "../../../third_party/zap/repo/test/gen-template/dotdot/mqtt.zapt",
+      "name": "MQTT test for dotdot",
+      "output": "st/clusters/mqtt.cpp"
+    },
+    {
+      "path": "templates/app/callbacks/PluginApplicationCallbacks.zapt",
+      "name": "Matter Application Callbacks header",
+      "output": "PluginApplicationCallbacks.h"
+    },
+    {
+      "path": "templates/app/callback-stub-src.zapt",
+      "name": "ZCL callback-stub source",
+      "output": "callback-stub.cpp"
+    },
+    {
+      "path": "templates/app/endpoint_config.zapt",
+      "name": "ZCL endpoint configuration",
+      "output": "endpoint_config.h"
+    },
+    {
+      "path": "templates/app/gen_config.zapt",
+      "name": "ZCL gen_config header",
+      "output": "gen_config.h"
+    },
+    {
+      "path": "templates/app/gen_tokens.zapt",
+      "name": "ZCL gen_tokens header",
+      "output": "gen_tokens.h"
+    },
+    {
+      "path": "templates/app/CHIPClientCallbacks.zapt",
+      "name": "CHIP Client Callbacks header",
+      "output": "CHIPClientCallbacks.h"
+    },
+    {
+      "path": "templates/app/im-cluster-command-handler.zapt",
+      "name": "CHIP Client Callbacks for Interaction Model",
+      "output": "IMClusterCommandHandler.cpp"
+    },
+    {
+      "path": "templates/app/CHIPClusters.zapt",
+      "name": "C++ ZCL API Header",
+      "output": "CHIPClusters.h"
+    },
+    {
+      "path": "templates/app/MatterIDL.zapt",
+      "name": "Human-readable Matter IDL",
+      "output": "Clusters.matter"
+    }
+  ]
 }
