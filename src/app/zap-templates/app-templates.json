@@ -81,6 +81,16 @@
       "output": "st/clusters/cluster/server/commands/commands.lua"
     },
     {
+      "path": "templates/app/st/clusters/cluster/server/types/init.zapt",
+      "name": "ST Matter Lua Library Generation Cluster Server Types",
+      "output": "st/clusters/cluster/server/types/init.lua"
+    },
+    {
+      "path": "templates/app/st/clusters/cluster/server/types/types.zapt",
+      "name": "ST Matter Lua Library Generation Cluster Server Types All",
+      "output": "st/clusters/cluster/server/types/types.lua"
+    },
+    {
       "path": "../../../third_party/zap/repo/test/gen-template/zigbee/zap-cluster-command-parser-2.c.zapt",
       "name": "Command struct parser functions, ver 2",
       "output": "st/clusters/zap-cluster-command-parser-2.c"

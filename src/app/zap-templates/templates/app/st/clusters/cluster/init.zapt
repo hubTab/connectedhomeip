@@ -1,6 +1,9 @@
 {{> header}}
 {{#chip_server_clusters}}
-{{#if (isStrEqual name "On/Off")}}
+==============================================================================================================================================================
+SOURCE_FILE_PATH="st/matter/generated/zap_clusters/{{asUpperCamelCase name}}/init.lua"
+==============================================================================================================================================================
+{{!-- #if (isStrEqual name "On/Off") --}}
 -- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,14 +18,13 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local cluster_base          = require "st.matter.cluster_base"
+local cluster_base = require "st.matter.cluster_base"
 local {{asUpperCamelCase name}}ServerAttributes = require "st.matter.generated.zap_clusters.{{asUpperCamelCase name}}.server.attributes"
-local OnOffServerCommands   = require "st.matter.generated.zap_clusters.OnOff.server.commands"
-local OnOffTypes            = require "st.matter.generated.zap_clusters.OnOff.types"
+local OnOffServerCommands = require "st.matter.generated.zap_clusters.OnOff.server.commands"
+local OnOffTypes = require "st.matter.generated.zap_clusters.OnOff.types"
 
 --- @class st.matter.generated.zap_clusters.{{asUpperCamelCase name}}
 --- @alias {{asUpperCamelCase name}}
-
 ---
 --- @field public ID number {{asHex code 4}} the ID of this cluster
 --- @field public NAME string "{{asUpperCamelCase name}}" the name of this cluster
@@ -61,7 +63,7 @@ local {{as_underscore_uppercase name}}_ATTRIBUTE = {{asHex code 4}}
 
 -- Commands Metadata
 {{#zcl_commands_source_client}}
-local {{as_underscore_uppercase name}}_COMMAND = {{asHex code 4}}
+local {{as_underscore_uppercase name}}_COMMAND_ID = {{asHex code 4}}
 {{/zcl_commands_source_client}}
 
 -- Represent the global attributes
@@ -98,7 +100,7 @@ end
 function {{asUpperCamelCase name}}:get_server_command_by_id(command_id)
   local server_id_map = {
 {{#zcl_commands_source_client}}
-    [{{as_underscore_uppercase name}}_COMMAND] = "{{asUpperCamelCase name}}",
+    [{{as_underscore_uppercase name}}_COMMAND_ID] = "{{asUpperCamelCase name}}",
 {{/zcl_commands_source_client}}
   }
   if server_id_map[command_id] ~= nil then
@@ -170,5 +172,5 @@ setmetatable({{asUpperCamelCase name}}, {__index = cluster_base})
 
 return {{asUpperCamelCase name}}
 
-{{/if}}  
+{{!-- /if --}}
 {{/chip_server_clusters}}

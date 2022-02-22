@@ -1,6 +1,9 @@
 {{> header}}
 {{#chip_server_clusters}}
-{{#if (isStrEqual name "On/Off")}}
+==============================================================================================================================================================
+SOURCE_FILE_PATH="st/matter/generated/zap_clusters/{{asUpperCamelCase name}}/server/commands/init.lua"
+==============================================================================================================================================================
+{{!-- #if (isStrEqual name "On/Off") --}}
 -- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,5 +46,5 @@ setmetatable({{asUpperCamelCase name}}ServerCommands, command_mt)
 
 return {{asUpperCamelCase name}}ServerCommands
 
-{{/if}}  
+{{!-- /if --}}
 {{/chip_server_clusters}}

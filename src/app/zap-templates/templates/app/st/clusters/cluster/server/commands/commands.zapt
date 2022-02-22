@@ -1,6 +1,10 @@
 {{> header}}
 {{#chip_server_clusters}}
-{{#if (isStrEqual name "On/Off")}}
+{{!-- {{#if (isStrEqual name "On/Off")}} --}}
+{{#zcl_commands_source_client}}
+==============================================================================================================================================================
+SOURCE_FILE_PATH="st/matter/generated/zap_clusters/{{asUpperCamelCase ../name}}/server/commands/{{asUpperCamelCase name}}.lua"
+==============================================================================================================================================================
 -- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,10 +19,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-{{#zcl_commands_source_client}}
-==============================================================================================================================================================
-SOURCE_FILE_PATH="st\matter\generated\zap_clusters\\{{asUpperCamelCase ../name}}\server\commands\\{{asUpperCamelCase name}}.lua"
-==============================================================================================================================================================
 local data_types = require "st.matter.data_types"
 local utils = require "st.matter.utils"
 local log = require "log"
@@ -110,10 +110,10 @@ end
 --- @param self {{asUpperCamelCase name}} the template class for this command
 --- @param device st.matter.Device the device to build this message to
 {{#zcl_command_arguments}}
---- @param {{asSnakeCaseLower label}} "st.matter.generated.zap_clusters.{{asUpperCamelCase ../../name}}.types.{{type}}"
+--- @param {{asSnakeCaseLower label}} st.matter.generated.zap_clusters.{{asUpperCamelCase ../../name}}.types.{{type}}
 {{/zcl_command_arguments}}
 --- @return st.matter.generated.zap_clusters.InteractionRequest of type INVOKE
-function {{asUpperCamelCase name}}:init(device, endpoint_id)
+function {{asUpperCamelCase name}}:init(device, endpoint_id, {{#zcl_command_arguments}}{{asSnakeCaseLower label}}{{#unless (is_last_element index count)}},{{/unless}}{{/zcl_command_arguments}})
   local out = {}
   local args = { {{#zcl_command_arguments}}{{asSnakeCaseLower label}},{{/zcl_command_arguments}} }
   if #args > #self.args_def then
@@ -154,5 +154,5 @@ return {{asUpperCamelCase name}}
 
 {{/zcl_commands_source_client}}
 
-{{/if}}
+{{!-- {{/if}} --}}
 {{/chip_server_clusters}}

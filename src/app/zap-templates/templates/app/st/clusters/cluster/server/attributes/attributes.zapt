@@ -1,6 +1,16 @@
 {{> header}}
 {{#chip_server_clusters}}
-{{#if (isStrEqual name "On/Off")}}
+{{!-- #if (isStrEqual name "On/Off") --}}
+{{#zcl_attributes_server}}
+{{#if (isStrEqual name "ClusterRevision")}}
+{{else if (isStrEqual name "ServerGeneratedCommandList")}}
+{{else if (isStrEqual name "ClientGeneratedCommandList")}}
+{{else if (isStrEqual name "AttributeList")}}
+{{else if (isStrEqual name "FeatureMap")}}
+{{else}}
+==============================================================================================================================================================
+SOURCE_FILE_PATH="st/matter/generated/zap_clusters/{{asUpperCamelCase ../name}}/server/attributes/{{asUpperCamelCase name}}.lua"
+==============================================================================================================================================================
 -- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,14 +25,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-{{#zcl_attributes_server}}
-{{#if (isStrEqual name "ClusterRevision")}}
-{{else if (isStrEqual name "ServerGeneratedCommandList")}}
-{{else if (isStrEqual name "ClientGeneratedCommandList")}}
-{{else if (isStrEqual name "AttributeList")}}
-{{else if (isStrEqual name "FeatureMap")}}
-{{else}}
-===============================================================================
 local cluster_base = require "st.matter.cluster_base"
 local data_types = require "st.matter.data_types"
 
@@ -31,7 +33,7 @@ local data_types = require "st.matter.data_types"
 ---
 --- @field public ID number {{asHex code 4}} the ID of this attribute
 --- @field public NAME string "{{asUpperCamelCase name}}" the name of this attribute
---- @field public data_type st.matter.data_types.{{type}} the data type of this attribute
+--- @field public data_type st.matter.data_types.{{asUpperCamelCase type}} the data type of this attribute
 {{!--
 see ./test/helper-api-baseline.json-
 {{as_cli_type type}}
@@ -73,11 +75,11 @@ end
 --- TODO
 {{asUpperCamelCase name}}.build_test_read_attr_response = cluster_base.build_test_read_attr_response
 
---- Create a {{type}} object of this attribute with any additional features provided for the attribute
+--- Create a {{asUpperCamelCase type}} object of this attribute with any additional features provided for the attribute
 --- This is also usable with the {{asUpperCamelCase name}}(...) syntax
 ---
---- @vararg vararg the values needed to construct a {{type}}
---- @return st.matter.data_types.{{type}}
+--- @vararg vararg the values needed to construct a {{asUpperCamelCase type}}
+--- @return st.matter.data_types.{{asUpperCamelCase type}}
 function {{asUpperCamelCase name}}:new_value(...)
   local o = self.base_type(table.unpack({...}))
   self:augment_type(o)
@@ -107,7 +109,7 @@ end
 --- this attribute to a device
 ---
 --- @param device st.matter.Device
---- @param value st.matter.data_types.{{type}} the value to write
+--- @param value st.matter.data_types.{{asUpperCamelCase type}} the value to write
 function {{asUpperCamelCase name}}:write(device, endpoint_id, value)
   local data = data_types.validate_or_build_type(value, self.base_type)
     self:augment_type(data)
@@ -151,5 +153,5 @@ return {{asUpperCamelCase name}}
 {{/zcl_attributes_server}}
 
 
-{{/if}}
+{{!-- /if --}}
 {{/chip_server_clusters}}
