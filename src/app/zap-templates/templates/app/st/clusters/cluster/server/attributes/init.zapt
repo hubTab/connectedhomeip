@@ -1,9 +1,8 @@
-{{> header}}
+{{!-- > header --}}
 {{#chip_server_clusters}}
-==============================================================================================================================================================
-SOURCE_FILE_PATH="st/matter/generated/zap_clusters/{{asUpperCamelCase name}}/server/attributes/init.lua"
-==============================================================================================================================================================
 {{!-- #if (isStrEqual name "On/Off") --}}
+SOURCE_FILE_PATH=st/matter/generated/zap_clusters/{{asUpperCamelCase name}}/server/attributes/init.lua
+{{lua_zap_header}}
 -- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");

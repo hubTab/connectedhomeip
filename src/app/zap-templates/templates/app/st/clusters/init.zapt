@@ -1,11 +1,11 @@
-{{> header}}
+{{lua_zap_header}}
 -- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
 -- You may obtain a copy of the License at
 --
--- http://www.apache.org/licenses/LICENSE-2.0
+--     http://www.apache.org/licenses/LICENSE-2.0
 --
 -- Unless required by applicable law or agreed to in writing, software
 -- distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,20 +50,20 @@ zap_clusters.id_to_name_map = {
 local zap_clusters_mt = {}
 zap_clusters_mt.__cluster_cache = {}
 zap_clusters_mt.__index = function(self, key)
-if zap_clusters_mt.__cluster_cache[key] == nil then
-local req_loq = string.format("st.matter.generated.zap_clusters.%s.init", key)
-zap_clusters_mt.__cluster_cache[key] = require(req_loq)
-end
-return zap_clusters_mt.__cluster_cache[key]
+  if zap_clusters_mt.__cluster_cache[key] == nil then
+    local req_loq = string.format("st.matter.generated.zap_clusters.%s.init", key)
+    zap_clusters_mt.__cluster_cache[key] = require(req_loq)
+  end
+  return zap_clusters_mt.__cluster_cache[key]
 end
 setmetatable(zap_clusters, zap_clusters_mt)
 
 zap_clusters.get_cluster_from_id = function(id)
-local cluster_name = zap_clusters.id_to_name_map[id]
-if cluster_name ~= nil then
-return zap_clusters[cluster_name]
-end
-return nil
+  local cluster_name = zap_clusters.id_to_name_map[id]
+  if cluster_name ~= nil then
+    return zap_clusters[cluster_name]
+  end
+  return nil
 end
 
 return zap_clusters

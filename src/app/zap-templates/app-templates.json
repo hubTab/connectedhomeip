@@ -8,7 +8,8 @@
     "common/ChipTypesHelper.js",
     "templates/app/helper.js",
     "templates/chip/helper.js",
-    "../../../third_party/zap/repo/test/gen-template/dotdot/addon-helper.js"
+    "../../../third_party/zap/repo/test/gen-template/dotdot/addon-helper.js",
+    "templates/app/st/templates/addon-helper-st.js"
   ],
   "override": "common/override.js",
   "partials": [

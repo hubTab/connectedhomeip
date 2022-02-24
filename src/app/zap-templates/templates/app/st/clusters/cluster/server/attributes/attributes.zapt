@@ -1,16 +1,16 @@
-{{> header}}
+{{!-- > header --}}
 {{#chip_server_clusters}}
-{{!-- #if (isStrEqual name "On/Off") --}}
+{{!-- {{#if (isStrEqual name "Door Lock")}} --}}
 {{#zcl_attributes_server}}
 {{#if (isStrEqual name "ClusterRevision")}}
 {{else if (isStrEqual name "ServerGeneratedCommandList")}}
 {{else if (isStrEqual name "ClientGeneratedCommandList")}}
 {{else if (isStrEqual name "AttributeList")}}
 {{else if (isStrEqual name "FeatureMap")}}
+{{!--else if (isStrEqual type "bitmap16")--}}
 {{else}}
-==============================================================================================================================================================
-SOURCE_FILE_PATH="st/matter/generated/zap_clusters/{{asUpperCamelCase ../name}}/server/attributes/{{asUpperCamelCase name}}.lua"
-==============================================================================================================================================================
+SOURCE_FILE_PATH=st/matter/generated/zap_clusters/{{asUpperCamelCase ../name}}/server/attributes/{{asUpperCamelCase name}}.lua
+{{lua_zap_header}}
 -- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,14 +26,20 @@ SOURCE_FILE_PATH="st/matter/generated/zap_clusters/{{asUpperCamelCase ../name}}/
 -- limitations under the License.
 
 local cluster_base = require "st.matter.cluster_base"
+{{#if (isStrEqual type "boolean")}}
 local data_types = require "st.matter.data_types"
+{{else if (isStrEqual type "int16u")}}
+local data_types = require "st.matter.data_types"
+{{else}}
+local data_types = require "st.matter.generated.zap_clusters.{{asUpperCamelCase ../name}}.types"
+{{/if}}
 
 --- @class st.matter.generated.zap_clusters.{{asUpperCamelCase ../name}}.{{asUpperCamelCase name}}
 --- @alias {{asUpperCamelCase name}}
 ---
 --- @field public ID number {{asHex code 4}} the ID of this attribute
 --- @field public NAME string "{{asUpperCamelCase name}}" the name of this attribute
---- @field public data_type st.matter.data_types.{{asUpperCamelCase type}} the data type of this attribute
+--- @field public data_type st.matter.data_types.{{asSTDataType type}} the data type of this attribute
 {{!--
 see ./test/helper-api-baseline.json-
 {{as_cli_type type}}
@@ -54,7 +60,7 @@ see ./test/helper-api-baseline.json-
 local {{asUpperCamelCase name}} = {
   ID = {{asHex code 4}},
   NAME = "{{asUpperCamelCase name}}",
-  base_type = data_types.{{asUpperCamelCase type}}
+  base_type = data_types.{{asSTDataType type}}
 }
 
 --- Add additional functionality to the base type object
@@ -75,11 +81,11 @@ end
 --- TODO
 {{asUpperCamelCase name}}.build_test_read_attr_response = cluster_base.build_test_read_attr_response
 
---- Create a {{asUpperCamelCase type}} object of this attribute with any additional features provided for the attribute
+--- Create a {{asSTDataType type}} object of this attribute with any additional features provided for the attribute
 --- This is also usable with the {{asUpperCamelCase name}}(...) syntax
 ---
---- @vararg vararg the values needed to construct a {{asUpperCamelCase type}}
---- @return st.matter.data_types.{{asUpperCamelCase type}}
+--- @vararg vararg the values needed to construct a {{asSTDataType type}}
+--- @return st.matter.data_types.{{asSTDataType type}}
 function {{asUpperCamelCase name}}:new_value(...)
   local o = self.base_type(table.unpack({...}))
   self:augment_type(o)
@@ -109,7 +115,7 @@ end
 --- this attribute to a device
 ---
 --- @param device st.matter.Device
---- @param value st.matter.data_types.{{asUpperCamelCase type}} the value to write
+--- @param value st.matter.data_types.{{asSTDataType type}} the value to write
 function {{asUpperCamelCase name}}:write(device, endpoint_id, value)
   local data = data_types.validate_or_build_type(value, self.base_type)
     self:augment_type(data)
@@ -151,7 +157,82 @@ return {{asUpperCamelCase name}}
 
 {{/if}}
 {{/zcl_attributes_server}}
+{{!-- 
+{{#zcl_bitmaps}}
+SOURCE_FILE_PATH=st/matter/generated/zap_clusters/{{asUpperCamelCase ../name}}/types/{{asUpperCamelCase name}}.lua
+{{lua_zap_header}}
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+-- http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
 
+local data_types = require "st.matter.data_types"
+local UintABC = require "st.matter.data_types.base_defs.UintABC"
 
-{{!-- /if --}}
+--- @class st.matter.generated.zap_clusters.{{asUpperCamelCase ../name}}.types.{{asUpperCamelCase name}}
+--- @alias {{asUpperCamelCase name}}
+---
+{{#zcl_bitmap_items}}
+--- @field public {{as_underscore_uppercase_lua (as_underscore_uppercase label)}} number {{mask}}
+{{/zcl_bitmap_items}}
+
+local {{asUpperCamelCase name}} = {}
+local new_mt = UintABC.new_mt({NAME = "{{asUpperCamelCase name}}", ID = data_types.name_to_id_map[{{asSTDataType type}}]}, 2???)
+
+{{asUpperCamelCase name}}.BASE_MASK = 0xFFFF
+{{#zcl_bitmap_items}}
+{{asUpperCamelCase ../name}}.{{as_underscore_uppercase_lua (as_underscore_uppercase label)}} = {{asHex mask 4}},
+{{/zcl_bitmap_items}}
+
+{{asUpperCamelCase name}}..mask_fields = {
+  BASE_MASK = 0xFFFF,
+{{#zcl_bitmap_items}}
+  {{as_underscore_uppercase_lua (as_underscore_uppercase label)}} = {{asHex mask 4}}
+{{/zcl_bitmap_items}}
+}
+
+{{#zcl_bitmap_items}}
+--- @function {{asUpperCamelCase ../name}}:is_{{asSnakeCaseLower label}}_set
+--- @return boolean True if the value of {{as_underscore_uppercase_lua (as_underscore_uppercase label)}} is non-zero
+{{asUpperCamelCase ../name}}.is_{{asSnakeCaseLower label}}_set = function(self)
+  return (self.value & self.{{as_underscore_uppercase_lua (as_underscore_uppercase label)}}) ~= 0
+end
+ 
+--- @function {{asUpperCamelCase ../name}}:set_{{asSnakeCaseLower label}}
+--- Set the value of the bit in the {{as_underscore_uppercase_lua (as_underscore_uppercase label)}} field to 1
+{{asUpperCamelCase ../name}}.set_{{asSnakeCaseLower label}} = function(self)
+  self.value = self.value | self.{{as_underscore_uppercase_lua (as_underscore_uppercase label)}}
+end
+
+--- @function {{asUpperCamelCase ../name}}:unset_{{asSnakeCaseLower label}}
+--- Set the value of the bits in the {{as_underscore_uppercase_lua (as_underscore_uppercase label)}} field to 0
+{{asUpperCamelCase ../name}}.unset_{{asSnakeCaseLower label}} = function(self)
+  self.value = self.value & (~self.{{as_underscore_uppercase_lua (as_underscore_uppercase label)}} & self.BASE_MASK)
+end
+{{/zcl_bitmap_items}}
+
+{{asUpperCamelCase ../name}}.mask_methods = {
+{{#zcl_bitmap_items}}
+  is_{{asSnakeCaseLower label}}_set = {{asUpperCamelCase ../name}}.is_{{asSnakeCaseLower label}}_set,
+  set_{{asSnakeCaseLower label}} = {{asUpperCamelCase ../name}}.set_{{asSnakeCaseLower label}},
+  unset_{{asSnakeCaseLower label}} = {{asUpperCamelCase ../name}}.unset_{{asSnakeCaseLower label}},
+{{/zcl_bitmap_items}}
+}
+
+setmetatable({{asUpperCamelCase name}}, new_mt)
+
+return {{asUpperCamelCase name}}
+
+{{/zcl_bitmaps}} --}}
+
+{{!-- {{/if}} --}}
 {{/chip_server_clusters}}

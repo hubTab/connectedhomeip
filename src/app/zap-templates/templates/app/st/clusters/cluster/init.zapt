@@ -1,9 +1,8 @@
-{{> header}}
+{{!-- > header --}}
 {{#chip_server_clusters}}
-==============================================================================================================================================================
-SOURCE_FILE_PATH="st/matter/generated/zap_clusters/{{asUpperCamelCase name}}/init.lua"
-==============================================================================================================================================================
 {{!-- #if (isStrEqual name "On/Off") --}}
+SOURCE_FILE_PATH=st/matter/generated/zap_clusters/{{asUpperCamelCase name}}/init.lua
+{{lua_zap_header}}
 -- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -57,13 +56,13 @@ local GLOBAL_CLUSTER_REVISION_ATTRIBUTE = {{asHex code 4}}
 {{else if (isStrEqual name "AttributeList")}}
 {{else if (isStrEqual name "FeatureMap")}}
 {{else}}
-local {{as_underscore_uppercase name}}_ATTRIBUTE = {{asHex code 4}}
+local {{as_underscore_uppercase_lua (as_underscore_uppercase name)}}_ATTRIBUTE = {{asHex code 4}}
 {{/if}}
 {{/zcl_attributes_server}}
 
 -- Commands Metadata
 {{#zcl_commands_source_client}}
-local {{as_underscore_uppercase name}}_COMMAND_ID = {{asHex code 4}}
+local {{as_underscore_uppercase_lua (as_underscore_uppercase name)}}_COMMAND_ID = {{asHex code 4}}
 {{/zcl_commands_source_client}}
 
 -- Represent the global attributes
@@ -83,7 +82,7 @@ function {{asUpperCamelCase name}}:get_attribute_by_id(attr_id)
   {{else if (isStrEqual name "AttributeList")}}
   {{else if (isStrEqual name "FeatureMap")}}
   {{else}}
-    [{{as_underscore_uppercase name}}_ATTRIBUTE] = "{{asUpperCamelCase name}}",
+    [{{as_underscore_uppercase_lua (as_underscore_uppercase name)}}_ATTRIBUTE] = "{{asUpperCamelCase name}}",
   {{/if}}
 {{/zcl_attributes_server}}
   }
@@ -100,7 +99,7 @@ end
 function {{asUpperCamelCase name}}:get_server_command_by_id(command_id)
   local server_id_map = {
 {{#zcl_commands_source_client}}
-    [{{as_underscore_uppercase name}}_COMMAND_ID] = "{{asUpperCamelCase name}}",
+    [{{as_underscore_uppercase_lua (as_underscore_uppercase name)}}_COMMAND_ID] = "{{asUpperCamelCase name}}",
 {{/zcl_commands_source_client}}
   }
   if server_id_map[command_id] ~= nil then
