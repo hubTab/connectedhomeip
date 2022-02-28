@@ -1,0 +1,95 @@
+{
+  "name": "CHIP Application templates",
+  "version": "chip-v1",
+  "helpers": [
+    "partials/helper.js",
+    "common/ListHelper.js",
+    "common/StringHelper.js",
+    "common/ChipTypesHelper.js",
+    "templates/app/helper.js",
+    "templates/chip/helper.js",
+    "../../../third_party/zap/repo/test/gen-template/dotdot/addon-helper.js",
+    "templates/app/st/templates/addon-helper-st.js"
+  ],
+  "override": "common/override.js",
+  "partials": [
+    {
+      "name": "header",
+      "path": "partials/header.zapt"
+    },
+    {
+      "name": "clusters_header",
+      "path": "partials/clusters_header.zapt"
+    },
+    {
+      "name": "cluster_header",
+      "path": "partials/cluster_header.zapt"
+    },
+    {
+      "name": "im_command_handler_cluster_commands",
+      "path": "partials/im_command_handler_cluster_commands.zapt"
+    },
+    {
+      "name": "idl_structure_definition",
+      "path": "partials/idl/structure_definition.zapt"
+    },
+    {
+      "name": "idl_structure_member",
+      "path": "partials/idl/structure_member.zapt"
+    },
+    {
+      "name": "idl_command_request_response",
+      "path": "partials/idl/command_request_response.zapt"
+    },
+    {
+      "name": "idl_command_request_struct",
+      "path": "partials/idl/command_request_struct.zapt"
+    },
+    {
+      "name": "idl_command_response_struct",
+      "path": "partials/idl/command_response_struct.zapt"
+    }
+  ],
+  "templates": [
+    {
+      "path": "templates/app/st/clusters/init.zapt",
+      "name": "ST Matter Lua Library Generation Clusters",
+      "output": "st/clusters/init.lua"
+    },
+    {
+      "path": "templates/app/st/clusters/cluster/init.zapt",
+      "name": "ST Matter Lua Library Generation Cluster Server",
+      "output": "st/clusters/cluster/init.lua"
+    },
+    {
+      "path": "templates/app/st/clusters/cluster/server/attributes/init.zapt",
+      "name": "ST Matter Lua Library Generation Cluster Server Attributes",
+      "output": "st/clusters/cluster/server/attributes/init.lua"
+    },
+    {
+      "path": "templates/app/st/clusters/cluster/server/attributes/attributes.zapt",
+      "name": "ST Matter Lua Library Generation Cluster Server Attributes All",
+      "output": "st/clusters/cluster/server/attributes/attributes.lua"
+    },
+    {
+      "path": "templates/app/st/clusters/cluster/server/commands/init.zapt",
+      "name": "ST Matter Lua Library Generation Cluster Server Commands",
+      "output": "st/clusters/cluster/server/commands/init.lua"
+    },
+    {
+      "path": "templates/app/st/clusters/cluster/server/commands/commands.zapt",
+      "name": "ST Matter Lua Library Generation Cluster Server Commands All",
+      "output": "st/clusters/cluster/server/commands/commands.lua"
+    },
+    {
+      "path": "templates/app/st/clusters/cluster/server/types/init.zapt",
+      "name": "ST Matter Lua Library Generation Cluster Server Types",
+      "output": "st/clusters/cluster/server/types/init.lua"
+    },
+    {
+      "path": "templates/app/st/clusters/cluster/server/types/types.zapt",
+      "name": "ST Matter Lua Library Generation Cluster Server Types All",
+      "output": "st/clusters/cluster/server/types/types.lua"
+    }
+  ]
+}
