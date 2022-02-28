@@ -1,0 +1,181 @@
+{{!-- > header --}}
+{{#chip_server_clusters}}
+{{#zcl_enums}}
+SOURCE_FILE_PATH=st/matter/generated/zap_clusters/{{asUpperCamelCase ../name}}/types/{{asUpperCamelCase name}}.lua
+{{lua_zap_header}}
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+local data_types = require "st.matter.data_types"
+local UintABC = require "st.matter.data_types.base_defs.UintABC"
+
+--- @class st.matter.generated.zap_clusters.{{asUpperCamelCase ../name}}.types.{{asUpperCamelCase name}}: st.matter.data_types.Uint8
+--- @alias {{asUpperCamelCase name}}
+---
+--- @field public byte_length number 1
+{{#zcl_enum_items}}
+--- @field public {{as_underscore_uppercase_lua (as_underscore_uppercase name)}} number {{value}}
+{{/zcl_enum_items}}
+
+local {{asUpperCamelCase name}} = {}
+local new_mt = UintABC.new_mt({NAME = "{{asUpperCamelCase name}}", ID = data_types.name_to_id_map["Uint8"]}, 1)
+new_mt.__index.pretty_print = function(self)
+  local name_lookup = {
+{{#zcl_enum_items}}
+    [self.{{as_underscore_uppercase_lua (as_underscore_uppercase name)}}] = "{{as_underscore_uppercase_lua (as_underscore_uppercase name)}}",
+{{/zcl_enum_items}}    
+  }
+  return string.format("%s: %s, ID %d", self.NAME or self.field_name, name_lookup[self.value] or string.format("%d", self.value), self.field_id)
+end
+new_mt.__tostring = new_mt.__index.pretty_print
+
+{{#zcl_enum_items}}
+new_mt.__index.{{as_underscore_uppercase_lua (as_underscore_uppercase name)}}{{ident}}= {{asHex value 2}}
+{{/zcl_enum_items}}    
+
+setmetatable({{asUpperCamelCase name}}, new_mt)
+
+return {{asUpperCamelCase name}}
+
+{{/zcl_enums}}
+{{#zcl_bitmaps}}
+SOURCE_FILE_PATH=st/matter/generated/zap_clusters/{{asUpperCamelCase ../name}}/types/{{asUpperCamelCase name}}.lua
+{{lua_zap_header}}
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+-- http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+local data_types = require "st.matter.data_types"
+local UintABC = require "st.matter.data_types.base_defs.UintABC"
+
+--- @class st.matter.generated.zap_clusters.{{asUpperCamelCase ../name}}.types.{{asUpperCamelCase name}}
+--- @alias {{asUpperCamelCase name}}
+---
+{{#zcl_bitmap_items}}
+--- @field public {{as_underscore_uppercase_lua (as_underscore_uppercase label)}} number {{mask}}
+{{/zcl_bitmap_items}}
+
+local {{asUpperCamelCase name}} = {}
+local new_mt = UintABC.new_mt({NAME = "{{asUpperCamelCase name}}", ID = data_types.name_to_id_map["{{asSTDataType type}}"]}, {{asSTDataTypeLength type}})
+
+{{asUpperCamelCase name}}.BASE_MASK = 0xFFFF
+{{#zcl_bitmap_items}}
+{{asUpperCamelCase ../name}}.{{as_underscore_uppercase_lua (as_underscore_uppercase label)}} = {{asHex mask 4}}
+{{/zcl_bitmap_items}}
+
+{{asUpperCamelCase name}}.mask_fields = {
+  BASE_MASK = 0xFFFF,
+{{#zcl_bitmap_items}}
+  {{as_underscore_uppercase_lua (as_underscore_uppercase label)}} = {{asHex mask 4}},
+{{/zcl_bitmap_items}}
+}
+
+{{#zcl_bitmap_items}}
+--- @function {{asUpperCamelCase ../name}}:is_{{asSnakeCaseLower label}}_set
+--- @return boolean True if the value of {{as_underscore_uppercase_lua (as_underscore_uppercase label)}} is non-zero
+{{asUpperCamelCase ../name}}.is_{{asSnakeCaseLower label}}_set = function(self)
+  return (self.value & self.{{as_underscore_uppercase_lua (as_underscore_uppercase label)}}) ~= 0
+end
+ 
+--- @function {{asUpperCamelCase ../name}}:set_{{asSnakeCaseLower label}}
+--- Set the value of the bit in the {{as_underscore_uppercase_lua (as_underscore_uppercase label)}} field to 1
+{{asUpperCamelCase ../name}}.set_{{asSnakeCaseLower label}} = function(self)
+  --self.value = self.value | self.{{as_underscore_uppercase_lua (as_underscore_uppercase label)}}
+  if self.value ~= nil then
+    self.value = self.value | self.{{as_underscore_uppercase_lua (as_underscore_uppercase label)}}
+  else
+    self.value = self.{{as_underscore_uppercase_lua (as_underscore_uppercase label)}}
+  end
+end
+
+--- @function {{asUpperCamelCase ../name}}:unset_{{asSnakeCaseLower label}}
+--- Set the value of the bits in the {{as_underscore_uppercase_lua (as_underscore_uppercase label)}} field to 0
+{{asUpperCamelCase ../name}}.unset_{{asSnakeCaseLower label}} = function(self)
+  self.value = self.value & (~self.{{as_underscore_uppercase_lua (as_underscore_uppercase label)}} & self.BASE_MASK)
+end
+{{/zcl_bitmap_items}}
+
+{{asUpperCamelCase name}}.mask_methods = {
+{{#zcl_bitmap_items}}
+  is_{{asSnakeCaseLower label}}_set = {{asUpperCamelCase ../name}}.is_{{asSnakeCaseLower label}}_set,
+  set_{{asSnakeCaseLower label}} = {{asUpperCamelCase ../name}}.set_{{asSnakeCaseLower label}},
+  unset_{{asSnakeCaseLower label}} = {{asUpperCamelCase ../name}}.unset_{{asSnakeCaseLower label}},
+{{/zcl_bitmap_items}}
+}
+
+setmetatable({{asUpperCamelCase name}}, new_mt)
+
+return {{asUpperCamelCase name}}
+
+{{/zcl_bitmaps}}
+{{!-- {{#zcl_bitmaps}}
+SOURCE_FILE_PATH=st/matter/generated/zap_clusters/{{asUpperCamelCase ../name}}/types/{{asUpperCamelCase name}}.lua
+{{lua_zap_header}}
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+local data_types = require "st.matter.data_types"
+local UintABC = require "st.matter.data_types.base_defs.UintABC"
+
+--- @class st.matter.generated.zap_clusters.{{asUpperCamelCase ../name}}.types.{{asUpperCamelCase name}}: st.matter.data_types.Uint8
+--- @alias {{asUpperCamelCase name}}
+---
+--- @field public byte_length number 1
+{{#zcl_bitmap_items}}
+--- @field public {{as_underscore_uppercase_lua (as_underscore_uppercase label)}} number {{mask}}
+{{/zcl_bitmap_items}}
+
+local{{asUpperCamelCase name}} = {}
+local new_mt = UintABC.new_mt({NAME = "{{asUpperCamelCase name}}", ID = data_types.name_to_id_map["Uint8"]}, 1)
+new_mt.__index.pretty_print = function(self)
+  local name_lookup = {
+{{#zcl_bitmap_items}}
+    [self.{{as_underscore_uppercase_lua (as_underscore_uppercase label)}}] = "{{as_underscore_uppercase_lua (as_underscore_uppercase label)}}",
+{{/zcl_bitmap_items}}    
+  }
+  return string.format("%s: %s, ID %d", self.NAME or self.field_name, name_lookup[self.mask] or string.format("%d", self.mask), self.field_id)
+end
+new_mt.__tostring = new_mt.__index.pretty_print
+
+{{#zcl_bitmap_items}}
+new_mt.__index.{{as_underscore_uppercase_lua (as_underscore_uppercase label)}}{{ident}}= {{asHex mask 2}}
+{{/zcl_bitmap_items}}    
+
+setmetatable({{asUpperCamelCase name}}, new_mt)
+
+return {{asUpperCamelCase label}}
+
+{{/zcl_bitmaps}} --}}
+{{/chip_server_clusters}}

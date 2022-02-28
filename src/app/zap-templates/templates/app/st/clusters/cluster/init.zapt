@@ -1,0 +1,175 @@
+{{!-- > header --}}
+{{#chip_server_clusters}}
+{{!-- #if (isStrEqual name "On/Off") --}}
+SOURCE_FILE_PATH=st/matter/generated/zap_clusters/{{asUpperCamelCase name}}/init.lua
+{{lua_zap_header}}
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+local cluster_base = require "st.matter.cluster_base"
+local {{asUpperCamelCase name}}ServerAttributes = require "st.matter.generated.zap_clusters.{{asUpperCamelCase name}}.server.attributes"
+local OnOffServerCommands = require "st.matter.generated.zap_clusters.OnOff.server.commands"
+local OnOffTypes = require "st.matter.generated.zap_clusters.OnOff.types"
+
+--- @class st.matter.generated.zap_clusters.{{asUpperCamelCase name}}
+--- @alias {{asUpperCamelCase name}}
+---
+--- @field public ID number {{asHex code 4}} the ID of this cluster
+--- @field public NAME string "{{asUpperCamelCase name}}" the name of this cluster
+--- @field public attributes st.matter.generated.zap_clusters.{{asUpperCamelCase name}}ServerAttributes | st.matter.generated.zap_clusters.{{asUpperCamelCase name}}ClientAttributes
+--- @field public commands st.matter.generated.zap_clusters.{{asUpperCamelCase name}}ServerCommands | st.matter.generated.zap_clusters.{{asUpperCamelCase name}}ClientCommands
+--- @field public types st.matter.generated.zap_clusters.{{asUpperCamelCase name}}Types
+
+local {{asUpperCamelCase name}} = {}
+
+{{asUpperCamelCase name}}.ID = {{asHex code 4}}
+{{asUpperCamelCase name}}.NAME = "{{asUpperCamelCase name}}"
+{{asUpperCamelCase name}}.server = {}
+{{asUpperCamelCase name}}.client = {}
+{{asUpperCamelCase name}}.server.attributes = {{asUpperCamelCase name}}ServerAttributes:set_parent_cluster({{asUpperCamelCase name}})
+OnOff.server.commands = OnOffServerCommands:set_parent_cluster(OnOff)
+OnOff.types = OnOffTypes
+
+-- Global Attributes Metadata
+{{#zcl_attributes_server}}
+{{#if (isStrEqual name "ClusterRevision")}}
+local GLOBAL_CLUSTER_REVISION_ATTRIBUTE = {{asHex code 4}}
+{{/if}}
+{{/zcl_attributes_server}}
+
+-- Atributes Metadata
+{{#zcl_attributes_server}}
+{{#if (isStrEqual name "ClusterRevision")}}
+{{else if (isStrEqual name "ServerGeneratedCommandList")}}
+{{else if (isStrEqual name "ClientGeneratedCommandList")}}
+{{else if (isStrEqual name "AttributeList")}}
+{{else if (isStrEqual name "FeatureMap")}}
+{{else}}
+local {{as_underscore_uppercase_lua (as_underscore_uppercase name)}}_ATTRIBUTE = {{asHex code 4}}
+{{/if}}
+{{/zcl_attributes_server}}
+
+-- Commands Metadata
+{{#zcl_commands_source_client}}
+local {{as_underscore_uppercase_lua (as_underscore_uppercase name)}}_COMMAND_ID = {{asHex code 4}}
+{{/zcl_commands_source_client}}
+
+-- Represent the global attributes
+local global_attr_id_map = {
+  [GLOBAL_CLUSTER_REVISION_ATTRIBUTE] = {"cluster revision"},
+}
+
+--- Find an attribute by id
+---
+--- @param attr_id number
+function {{asUpperCamelCase name}}:get_attribute_by_id(attr_id)
+  local attr_id_map = {
+{{#zcl_attributes_server}}
+  {{#if (isStrEqual name "ClusterRevision")}}
+  {{else if (isStrEqual name "ServerGeneratedCommandList")}}
+  {{else if (isStrEqual name "ClientGeneratedCommandList")}}
+  {{else if (isStrEqual name "AttributeList")}}
+  {{else if (isStrEqual name "FeatureMap")}}
+  {{else}}
+    [{{as_underscore_uppercase_lua (as_underscore_uppercase name)}}_ATTRIBUTE] = "{{asUpperCamelCase name}}",
+  {{/if}}
+{{/zcl_attributes_server}}
+  }
+  local attr_name = attr_id_map[attr_id]
+  if attr_name ~= nil then
+    return self.attributes[attr_name]
+  end
+  return nil
+end
+
+--- Find a server command by id
+---
+--- @param command_id number
+function {{asUpperCamelCase name}}:get_server_command_by_id(command_id)
+  local server_id_map = {
+{{#zcl_commands_source_client}}
+    [{{as_underscore_uppercase_lua (as_underscore_uppercase name)}}_COMMAND_ID] = "{{asUpperCamelCase name}}",
+{{/zcl_commands_source_client}}
+  }
+  if server_id_map[command_id] ~= nil then
+    return self.server.commands[server_id_map[command_id]]
+  end
+  return nil
+end
+
+--- Find a client command by id
+---
+--- @param command_id number
+function OnOff:get_client_command_by_id(command_id)
+  local client_id_map = {
+{{#zcl_commands_source_server}}
+    [{{asUpperCamelCase name}}_COMMAND] = "{{asUpperCamelCase name}}",
+{{/zcl_commands_source_server}}    
+  }
+  if client_id_map[command_id] ~= nil then
+    return self.client.commands[client_id_map[command_id]]
+  end
+  return nil
+end
+
+-- Attribute Mapping
+{{asUpperCamelCase name}}.attribute_direction_map = {
+{{#zcl_attributes_server}}
+  {{#if (isStrEqual name "ClusterRevision")}}
+  {{else if (isStrEqual name "ServerGeneratedCommandList")}}
+  {{else if (isStrEqual name "ClientGeneratedCommandList")}}
+  {{else if (isStrEqual name "AttributeList")}}
+  {{else if (isStrEqual name "FeatureMap")}}
+  {{else}}
+    ["{{asUpperCamelCase name}}"] = "server",
+  {{/if}}
+{{/zcl_attributes_server}}
+}
+
+-- Command Mapping
+{{asUpperCamelCase name}}.command_direction_map = {
+{{#zcl_commands_source_client}}
+  ["{{asUpperCamelCase name}}"] = "server",
+{{/zcl_commands_source_client}}
+}
+
+-- Cluster Completion
+local attribute_helper_mt = {}
+attribute_helper_mt.__index = function(self, key)
+  local direction = {{asUpperCamelCase name}}.attribute_direction_map[key]
+  if direction == nil then
+    error(string.format("Referenced unknown attribute %s on cluster %s", key, {{asUpperCamelCase name}}.NAME))
+  end
+  return {{asUpperCamelCase name}}[direction].attributes[key]
+end
+{{asUpperCamelCase name}}.attributes = {}
+setmetatable({{asUpperCamelCase name}}.attributes, attribute_helper_mt)
+
+local command_helper_mt = {}
+command_helper_mt.__index = function(self, key)
+  local direction = {{asUpperCamelCase name}}.command_direction_map[key]
+  if direction == nil then
+    error(string.format("Referenced unknown command %s on cluster %s", key, {{asUpperCamelCase name}}.NAME))
+  end
+  return {{asUpperCamelCase name}}[direction].commands[key] 
+end
+{{asUpperCamelCase name}}.commands = {}
+setmetatable({{asUpperCamelCase name}}.commands, command_helper_mt)
+
+setmetatable({{asUpperCamelCase name}}, {__index = cluster_base})  
+
+return {{asUpperCamelCase name}}
+
+{{!-- /if --}}
+{{/chip_server_clusters}}
