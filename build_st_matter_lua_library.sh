@@ -8,15 +8,23 @@
 git checkout smartthings_zap_artifacts
 
 # Temporary solution till we get these PRs merged into master
-git checkout DoorLock_Type_Update_Issue_15528 -- src/app/zap-templates/zcl/data-model/chip/door-lock-cluster.xm
+git checkout DoorLock_Type_Update_Issue_15528 -- src/app/zap-templates/zcl/data-model/chip/door-lock-cluster.xml
 git checkout OnOff_Type_Update_Issue_15528 -- src/app/zap-templates/zcl/data-model/chip/onoff-cluster.xml
 
-# Create the patch on the fly. This allows for in place editing and development of the ST ZAP Templates
-git diff master > smartthings_zap_artifacts-patch.patch
+###############################################################################
+# Alternative approach: generate Lua Library in the master branch
+###############################################################################
+# # Create the patch on the fly. This allows for in place editing and development of the ST ZAP Templates
+# git diff master > smartthings_zap_artifacts-patch.patch
 
-# Switch to master and apply the patch
-git checkout master --recurse-submodules
-git apply --whitespace=nowarn --verbose --ignore-whitespace smartthings_zap_artifacts-patch.patch
+# # Switch to master and apply the patch
+# git checkout master --recurse-submodules
+# git apply --whitespace=nowarn --verbose --ignore-whitespace smartthings_zap_artifacts-patch.patch
+
+###############################################################################
+# Current approach: generate Lua Library in this branch
+###############################################################################
+git rebase master
 
 # Generate the ZAP Compiled Cluster code
 mkdir -p zzz_generated/st-clusters
