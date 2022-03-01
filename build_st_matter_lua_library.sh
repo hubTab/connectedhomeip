@@ -6,7 +6,7 @@
 set -e
 lua_library="${1:-matter lua library}"
  
-[ ! -d "$lua_library" ] && { echo "$0 - Directory $lua_library not found."; exit 1; }
+[ ! -d "$lua_library" ] && { echo "$0 - Directory $lua_library not provided. Usage $0 <lua_library_directory>"; exit 1; }
 echo "LuaLibrary is $lua_library"
 
 # Start from smartthings_zap_artifacts branch
