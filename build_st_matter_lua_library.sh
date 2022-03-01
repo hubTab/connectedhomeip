@@ -4,10 +4,17 @@
 # Usage -  ./shuild_st_matter_lua_library.sh
 # ----------------------------------------------------------------
 set -e
-lua_library="${1:-matter lua library}"
+
+THIS_DIR=$PWD
+DOC_DIR="$THIS_DIR/../hub-core/lib/scripting-engine/lua_libs/st/matter/generated/zap_clusters"
+
+COMPILED_GENERATED_ST_CLUSTERS=$THIS_DIR/zzz_generated/st-clusters
+GENERATED_ST_CLUSTERS=$COMPILED_GENERATED_ST_CLUSTERS/st/matter/generated/zap_clusters
+
+doc_path="${1:-$DOC_DIR}"
  
-[ ! -d "$lua_library" ] && { echo "$0 - Directory $lua_library not provided. Usage $0 <lua_library_directory>"; exit 1; }
-echo "LuaLibrary is $lua_library"
+[ ! -d "$doc_path" ] && { echo "$0 - Directory $doc_path not provided. Usage $0 <lua_library_directory>"; exit 1; }
+echo "Generating Matter Lua Library to $doc_path"
 
 # Start from smartthings_zap_artifacts branch
 git checkout smartthings_zap_artifacts
@@ -32,13 +39,13 @@ git checkout OnOff_Type_Update_Issue_15528 -- src/app/zap-templates/zcl/data-mod
 git rebase master
 
 # Generate the ZAP Compiled Cluster code
-mkdir -p zzz_generated/st-clusters
-scripts/tools/zap/generate.py --templates src/app/zap-templates/st-app-templates.json examples/st/st-clusters-app.zap -o zzz_generated/st-clusters
+mkdir -p $COMPILED_GENERATED_ST_CLUSTERS
+scripts/tools/zap/generate.py --templates src/app/zap-templates/st-app-templates.json examples/st/st-clusters-app.zap -o $COMPILED_GENERATED_ST_CLUSTERS
 
 # Segregate the ZAP Compiled Code into individual lua files 
-cp src/app/zap-templates/templates/app/st/scripts/generate_clusters.sh zzz_generated/st-clusters/
-cp src/app/zap-templates/templates/app/st/scripts/process_files.sh zzz_generated/st-clusters/
-cd zzz_generated/st-clusters/
+cp src/app/zap-templates/templates/app/st/scripts/generate_clusters.sh $COMPILED_GENERATED_ST_CLUSTERS/
+cp src/app/zap-templates/templates/app/st/scripts/process_files.sh $COMPILED_GENERATED_ST_CLUSTERS/
+cd $COMPILED_GENERATED_ST_CLUSTERS/
 ./generate_clusters.sh
 
 # Apply lua syntax checker across all lua files
@@ -47,9 +54,9 @@ if find st/matter/ -maxdepth 1000 -type f -exec printf '%s\0' {} \; | xargs -0 l
 then
   echo "$NUMBER_OF_LUA_FILES Lua Files Syntax passed";
 
-  # Copy the Lua Library to the 
-  echo "Copying generated Lua Libary to $lua_library"
-  cp -r ./st/matter/generated/zap_clusters/* ${lua_library}/
+  # Copying generated Lua Library
+  echo "Copying generated Lua Library to $doc_path"
+  cp -r $GENERATED_ST_CLUSTERS/* ${doc_path}/
 else
   echo "$NUMBER_OF_LUA_FILES Lua Files Syntax failed";
 fi
