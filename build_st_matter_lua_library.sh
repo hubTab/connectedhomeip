@@ -7,6 +7,10 @@
 # Start from smartthings_zap_artifacts branch
 git checkout smartthings_zap_artifacts
 
+# Temporary solution till we get these PRs merged into master
+git checkout DoorLock_Type_Update_Issue_15528 -- src/app/zap-templates/zcl/data-model/chip/door-lock-cluster.xm
+git checkout OnOff_Type_Update_Issue_15528 -- src/app/zap-templates/zcl/data-model/chip/onoff-cluster.xml
+
 # Create the patch on the fly. This allows for in place editing and development of the ST ZAP Templates
 git diff master > smartthings_zap_artifacts-patch.patch
 
