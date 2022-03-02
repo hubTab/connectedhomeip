@@ -12,7 +12,7 @@ fi
 
 COMPILED_GENERATED_ST_CLUSTERS=$THIS_DIR/zzz_generated/st-clusters
 GENERATED_ST_CLUSTERS=$COMPILED_GENERATED_ST_CLUSTERS/st/matter/generated/zap_clusters
-# DOC_DIR="../hub-core/lib/scripting-engine/lua_libs/st/matter/generate"
+# DOC_DIR="../hub-core/lib/scripting-engine/lua_libs/st/matter/generated/zap_clusters"
 
 # doc_path="${1:-$DOC_DIR}"
 doc_path="${1}"
