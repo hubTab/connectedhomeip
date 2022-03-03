@@ -42,29 +42,11 @@ local {{type}}Type = require "st.matter.generated.zap_clusters.{{asUpperCamelCas
 {{#zcl_command_arguments}}
 --- @field public {{asSnakeCaseLower label}} st.matter.generated.zap_clusters.{{asUpperCamelCase ../../name}}.types.{{asSTDataType type}}
 {{/zcl_command_arguments}}
-{{!--
-see ./test/helper-api-baseline.json-
-{{as_cli_type type}}
-{{as_type type}}
-{{as_underlying_type type}}
-{{as_underlying_zcl_type type}}
-{{as_underlying_zcl_type_ca_always_present_with_presentif type}}
-{{as_underlying_zcl_type_ca_not_always_present_no_presentif type}},
-{{as_underlying_zcl_type_ca_not_always_present_with_presentif type}},
-{{as_underlying_zcl_type_command_argument_always_present type}},
-{{as_underlying_zcl_type_command_argument_always_present_with_presentif type}},
-{{as_underlying_zcl_type_command_argument_not_always_present_no_presentif type}},
-{{as_underlying_zcl_type_command_argument_not_always_present_with_presentif type}},
-{{as_underlying_zcl_type_command_is_not_fixed_length_but_command_argument_is_always_present type}},
-{{as_underlying_zcl_type_if_command_is_not_fixed_length type}},
-{{as_zcl_cli_type type}},
---}}
 local {{asUpperCamelCase name}} = {}
 
 {{asUpperCamelCase name}}.NAME = "{{asUpperCamelCase name}}"
 {{asUpperCamelCase name}}.ID = {{asHex code 4}}
 {{asUpperCamelCase name}}.args_def = {
-{{!--third_party\zap\repo\src-electron\db\db-mapping.js--}}
 {{#zcl_command_arguments}}
   {
     name = "{{asSnakeCaseLower label}}",
