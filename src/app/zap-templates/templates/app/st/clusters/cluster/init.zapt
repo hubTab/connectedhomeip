@@ -49,23 +49,6 @@ local GLOBAL_CLUSTER_REVISION_ATTRIBUTE = {{asHex code 4}}
 {{/if}}
 {{/zcl_attributes_server}}
 
--- Atributes Metadata
-{{#zcl_attributes_server}}
-{{#if (isStrEqual name "ClusterRevision")}}
-{{else if (isStrEqual name "ServerGeneratedCommandList")}}
-{{else if (isStrEqual name "ClientGeneratedCommandList")}}
-{{else if (isStrEqual name "AttributeList")}}
-{{else if (isStrEqual name "FeatureMap")}}
-{{else}}
-local {{as_underscore_uppercase_lua (as_underscore_uppercase name)}}_ATTRIBUTE = {{asHex code 4}}
-{{/if}}
-{{/zcl_attributes_server}}
-
--- Commands Metadata
-{{#zcl_commands_source_client}}
-local {{as_underscore_uppercase_lua (as_underscore_uppercase name)}}_COMMAND_ID = {{asHex code 4}}
-{{/zcl_commands_source_client}}
-
 -- Represent the global attributes
 local global_attr_id_map = {
   [GLOBAL_CLUSTER_REVISION_ATTRIBUTE] = {"cluster revision"},
@@ -77,14 +60,14 @@ local global_attr_id_map = {
 function {{asUpperCamelCase name}}:get_attribute_by_id(attr_id)
   local attr_id_map = {
 {{#zcl_attributes_server}}
-  {{#if (isStrEqual name "ClusterRevision")}}
-  {{else if (isStrEqual name "ServerGeneratedCommandList")}}
-  {{else if (isStrEqual name "ClientGeneratedCommandList")}}
-  {{else if (isStrEqual name "AttributeList")}}
-  {{else if (isStrEqual name "FeatureMap")}}
-  {{else}}
-    [{{as_underscore_uppercase_lua (as_underscore_uppercase name)}}_ATTRIBUTE] = "{{asUpperCamelCase name}}",
-  {{/if}}
+{{#if (isStrEqual name "ClusterRevision")}}
+{{else if (isStrEqual name "ServerGeneratedCommandList")}}
+{{else if (isStrEqual name "ClientGeneratedCommandList")}}
+{{else if (isStrEqual name "AttributeList")}}
+{{else if (isStrEqual name "FeatureMap")}}
+{{else}}
+    [{{asHex code 4}}] = "{{asUpperCamelCase name}}",
+{{/if}}
 {{/zcl_attributes_server}}
   }
   local attr_name = attr_id_map[attr_id]
@@ -100,7 +83,7 @@ end
 function {{asUpperCamelCase name}}:get_server_command_by_id(command_id)
   local server_id_map = {
 {{#zcl_commands_source_client}}
-    [{{as_underscore_uppercase_lua (as_underscore_uppercase name)}}_COMMAND_ID] = "{{asUpperCamelCase name}}",
+    [{{asHex code 4}}] = "{{asUpperCamelCase name}}",
 {{/zcl_commands_source_client}}
   }
   if server_id_map[command_id] ~= nil then
@@ -127,14 +110,14 @@ end
 -- Attribute Mapping
 {{asUpperCamelCase name}}.attribute_direction_map = {
 {{#zcl_attributes_server}}
-  {{#if (isStrEqual name "ClusterRevision")}}
-  {{else if (isStrEqual name "ServerGeneratedCommandList")}}
-  {{else if (isStrEqual name "ClientGeneratedCommandList")}}
-  {{else if (isStrEqual name "AttributeList")}}
-  {{else if (isStrEqual name "FeatureMap")}}
-  {{else}}
-    ["{{asUpperCamelCase name}}"] = "server",
-  {{/if}}
+{{#if (isStrEqual name "ClusterRevision")}}
+{{else if (isStrEqual name "ServerGeneratedCommandList")}}
+{{else if (isStrEqual name "ClientGeneratedCommandList")}}
+{{else if (isStrEqual name "AttributeList")}}
+{{else if (isStrEqual name "FeatureMap")}}
+{{else}}
+  ["{{asUpperCamelCase name}}"] = "server",
+{{/if}}
 {{/zcl_attributes_server}}
 }
 
