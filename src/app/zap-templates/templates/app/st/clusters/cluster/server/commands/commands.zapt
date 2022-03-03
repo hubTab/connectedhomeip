@@ -1,7 +1,6 @@
 {{#chip_server_clusters}}
 {{#zcl_commands_source_client}}
 SOURCE_FILE_PATH=st/matter/generated/zap_clusters/{{asUpperCamelCase ../name}}/server/commands/{{asUpperCamelCase name}}.lua
-{{lua_zap_header}}
 -- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +14,8 @@ SOURCE_FILE_PATH=st/matter/generated/zap_clusters/{{asUpperCamelCase ../name}}/s
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
+
+{{lua_zap_header}}
 
 local data_types = require "st.matter.data_types"
 local utils = require "st.matter.utils"
