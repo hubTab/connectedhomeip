@@ -49,7 +49,7 @@ end
 {{/zcl_bitmap_items}}
 {{/zcl_bitmaps}}
 
-local  {{asUpperCamelCase name}}Types = {}
+local {{asUpperCamelCase name}}Types = {}
 
 setmetatable({{asUpperCamelCase name}}Types, types_mt)
 

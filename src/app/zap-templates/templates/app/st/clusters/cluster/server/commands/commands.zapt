@@ -103,7 +103,7 @@ end
 --- @return st.matter.generated.zap_clusters.InteractionRequest of type INVOKE
 function {{asUpperCamelCase name}}:init(device, endpoint_id{{#zcl_command_arguments}}{{#first}}, {{/first}}{{asSnakeCaseLower label}}{{#unless (is_last_element index count)}},{{/unless}}{{/zcl_command_arguments}})
   local out = {}
-  local args = { {{~#zcl_command_arguments}}{{asSnakeCaseLower label}}{{#unless (is_last_element index count)}},{{/unless}}{{/zcl_command_arguments~}}}
+  local args = { {{~#zcl_command_arguments}}{{asSnakeCaseLower label}}{{#unless (is_last_element index count)}}, {{/unless}}{{/zcl_command_arguments~}}}
   if #args > #self.args_def then
     error(self.NAME .. " received too many arguments")
   end

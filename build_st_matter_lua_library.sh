@@ -34,8 +34,8 @@ cd $THIS_DIR
 git checkout smartthings_zap_artifacts
 
 # Temporary solution till we get these PRs merged into master
-# git checkout DoorLock_Type_Update_Issue_15528 -- src/app/zap-templates/zcl/data-model/chip/door-lock-cluster.xml
-# git checkout OnOff_Type_Update_Issue_15528 -- src/app/zap-templates/zcl/data-model/chip/onoff-cluster.xml
+git checkout DoorLock_Type_Update_Issue_15528 -- src/app/zap-templates/zcl/data-model/chip/door-lock-cluster.xml
+git checkout OnOff_Type_Update_Issue_15528 -- src/app/zap-templates/zcl/data-model/chip/onoff-cluster.xml
 
 # ###############################################################################
 # # Alternative approach: generate Lua Library in the master branch
